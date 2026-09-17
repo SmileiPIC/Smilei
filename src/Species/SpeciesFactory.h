@@ -681,9 +681,9 @@ public:
                 LINK_NAMELIST + std::string("#species")
             );
         }
-        if( (params.hasWindow) && (( this_species->boundary_conditions_[0][1] != "remove" ) || ( this_species->boundary_conditions_[0][0] != "remove" ) )) {
+        if( (params.hasWindow) && (!((this_species->boundary_conditions_[0][1] == "reflective") || ( this_species->boundary_conditions_[0][1] == "remove" )) || ( this_species->boundary_conditions_[0][0] != "remove" ) )) {
             ERROR_NAMELIST(
-                " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. ",
+                " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species, with the only exception that 'reflective' boundary condition can be used at the x-max boundary. ",
                 LINK_NAMELIST + std::string("#species")
             );
         }

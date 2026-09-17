@@ -644,5 +644,19 @@ void ProjectorAM1OrderRuyten::susceptibility( ElectroMagn *EMfields, Particles &
 void ProjectorAM1OrderRuyten::axisBCEnvChi( double *EnvChi )
 {
 
+    double sign = 1.;
+    int imode = 0;
+    for (int i=0; i< imode; i++) sign *= -1;
+    if (EnvChi) {
+        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
+            //Fold EnvChi
+            EnvChi[i]   = EnvChi[i+1];
+            for( unsigned int j=1 ; j<3; j++ ) {
+                EnvChi[i-j]  = sign * EnvChi[i+j];
+            }
+
+        }
+    }
+
 return;
 }

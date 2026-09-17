@@ -1144,11 +1144,13 @@ void VectorPatch::injectEnvelopeFromXminIfNeeded( Params &params, double time_du
        && (( *this )( 0 )->EMfields->envelope->box_side=="xmin") 
        && (( *this )( 0 )->EMfields->envelope->keep_injecting_laser_envelope) ) 
     {
+        SMILEI_PY_SAVE_MASTER_THREAD
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Apply boundary conditions for envelope A to inject the laser
             ( *this )( ipatch )->EMfields->envelope->injectEnvelopeFromXmin( ( *this )( ipatch ), params, time_dual );
         }
+        SMILEI_PY_RESTORE_MASTER_THREAD
     }
 
 } // END injectEnvelopeFromXminIfNeeded

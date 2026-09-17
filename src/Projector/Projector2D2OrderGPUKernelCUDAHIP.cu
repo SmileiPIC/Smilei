@@ -1,3 +1,69 @@
+//! HIP CUDA implementation
+//!
+//! ====================================================================
+//! Projector3D2OrderGPUKernelCUDAHIP 
+//! ====================================================================
+//! Increase Projector performance thanks to Nsight-Compute report
+//! --------------------------------------------------------------------
+//! Mixed precision
+//! --------------------------------------------------------------------
+//! To increase the computational throughput some calculation can use
+//! float instead of double without degrading numerical heating.
+//! For example using 'float' for reduction allow speed-up which can reduce
+//! contention. In top of that :
+//! Adds a ComputePositionFloat type (typically double) used
+//! exclusively for the position → delta calculation, which involves
+//! catastrophic cancellation (xpn - round(xpn)). All other
+//! computations (shape functions, weights, deposition) use
+//! ComputeFloat (can be float for register savings).
+//!
+//! Precision map:
+//!   ComputePositionFloat (double)  — position × dx_inv, xpn - ip
+//!   ComputeFloat         (float)   — shape functions, weights, J deposition
+//!   ReductionFloat       (float)   — shared memory atomics
+//!   double                         — global memory flush (always)
+//! --------------------------------------------------------------------
+//! TUNING GUIDE
+//! --------------------------------------------------------------------
+//! In order to maximize the occupancy and the correct use of GPU, some
+//! parameters have been add to tune the projector in accordance with the GPU
+//! capability.
+//!
+//! Goals :
+//!   - Reduce contention
+//!   - Increase or deacrese the use of LDS/Shared Memory to adjust the number of
+//!     Blocks per Stream Multiprocessor
+//!   - Increase or deacrese the use of register to adjust the number of
+//!     Blocks per Stream Multiprocessor
+//!
+//!   kWorkgroupSize   — Threads per block (typically 128 in 3D)
+//!   kNBufferCopies   — Replicated shared memory buffers (1 = off) to reduce contention (useful in 2D !)
+//!   kShmemPad        — Shared memory stride padding (0 = off) to reduce bank conflict
+//!   kMinBlocksPerSM  — Minimum blocks per SM for __launch_bounds__ to force a number of block per SM
+//!                      to increase occupancy if LDS or Register allow it
+//!
+//! Bonuses with mixed precision :
+//!
+//! Type aliases:
+//!   ComputeFloat         = float  → saves ~27 registers (double→float on shapes)
+//!   ComputePositionFloat = double → preserves position precision
+//!   ReductionFloat       = float  → shared memory atomics (unchanged)
+//!
+//! Tested configurations on GH200 (228 KB shmem/SM, 65536 regs/SM):
+//!
+//!   Config A: copies=1, pad=0, minBlocks=8  → 89 ms
+//!   Config B: copies=2, pad=0, minBlocks=8  → 89 ms
+//!   Config C: copies=1, pad=2, minBlocks=8  → 85 ms (if bank conflicts dominate)
+//!   Config D: copies=2, pad=2, minBlocks=6  → 101 ms (shmem limited)
+//!
+//! Bank conflict padding math (for GCWidth=9):
+//!   pad=0 → width= 9, strides (1, 9, 81),  81 mod 32 = 17 (ok-ish)
+//!   pad=1 → width=10, strides (1,10,100), 100 mod 32 =  4 (BAD)
+//!   pad=2 → width=11, strides (1,11,121), 121 mod 32 = 25 (GOOD)
+//!   pad=3 → width=12, strides (1,12,144), 144 mod 32 = 16 (BAD)
+//! 
+//! All theses configuration have been tested and stress with Nsight-Compute
+//! ====================================================================
 
 // TODO(Etienne M): The makefile does not recognise this file and doesn't compute
 // it's dependencies. If you make a modification in one of the header this file
@@ -49,7 +115,6 @@ namespace cudahip2d {
                 std::exit( EXIT_FAILURE );
             }
         }
-// For NVIDIA compiler 
 #elif defined(  __NVCC__ )
         static inline void
         checkErrors( ::cudaError_t an_error_code,
@@ -78,7 +143,6 @@ namespace cudahip2d {
                 {
         #if defined( __gfx90a__ ) ||  defined (__gfx942__)
                     ::unsafeAtomicAdd( a_pointer, a_value );
-
         #else
                     ::atomicAdd( a_pointer, a_value );
         #endif
@@ -108,11 +172,20 @@ namespace cudahip2d {
             } // namespace GDS
         }     // namespace atomic
 
+
+        // ====================================================================
+        // Current deposition kernel (Jx, Jy, Jz) — without rho
+        // ====================================================================
+
         template <typename ComputeFloat,
+                  typename ComputePositionFloat,       // High-precision type for positions
                   typename ReductionFloat,
-                  std::size_t kWorkgroupSize>
+                  std::size_t kWorkgroupSize,
+                  std::size_t kNBufferCopies,
+                  std::size_t kShmemPad,
+                  std::size_t kMinBlocksPerSM>
         __global__ void
-        // __launch_bounds__(kWorkgroupSize, 1)
+        __launch_bounds__(kWorkgroupSize, kMinBlocksPerSM)
         DepositCurrentDensity_2D_Order2( double *__restrict__ device_Jx,
                                          double *__restrict__ device_Jy,
                                          double *__restrict__ device_Jz,
@@ -129,59 +202,57 @@ namespace cudahip2d {
                                          const int *__restrict__ device_iold_,
                                          const double *__restrict__ device_deltaold_,
                                          ComputeFloat inv_cell_volume,
-                                         ComputeFloat dx_inv,
-                                         ComputeFloat dy_inv,
+                                         ComputePositionFloat dx_inv,  // Position precision
+                                         ComputePositionFloat dy_inv,  // Position precision
                                          ComputeFloat dx_ov_dt,
                                          ComputeFloat dy_ov_dt,
                                          int          i_domain_begin,
                                          int          j_domain_begin,
                                          int          nprimy,
                                          int          not_spectral_,
+                                         unsigned int oversize_,
                                          bool         cell_sorting )
         {
-            // TODO(Etienne M): refactor this function. Break it into smaller
-            // pieces (lds init/store, coeff computation, deposition etc..)
-            // TODO(Etienne M): __ldg could be used to slightly improve GDS load
-            // speed. This would only have an effect on Nvidia cards as this
-            // operation is a no op on AMD.
-            const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
+            const unsigned int workgroup_size = kWorkgroupSize;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
 
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
-            const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y + y_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
+            const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y + y_cluster_coordinate;
             const unsigned int thread_index_offset           = threadIdx.x;
 
-            // The unit is the cell
-            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
-            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
-            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
-            ComputeFloat one_half = 1. / 2.;
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 );
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 );
 
-            // NOTE: We gain from the particles not being sorted inside a
-            // cluster because it reduces the bank conflicts one gets when
-            // multiple threads access the same part of the shared memory. Such
-            // "conflicted" accesses are serialized !
-            // NOTE: We use a bit to much LDS. For Jx, the first row could be
-            // discarded, for Jy we could remove the first column.
+            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 2, 2 );
+            const int PaddedGCWidth = GPUClusterWithGCWidth + static_cast<int>( kShmemPad ); // To reduce Bank Conflict
 
-            static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+            static constexpr unsigned int kLogicalGCWidth   = Params::getGPUClusterWithGhostCellWidth( 2, 2 );
+            static constexpr unsigned int kPaddedGCWidth    = kLogicalGCWidth + kShmemPad;
+            static constexpr unsigned int kPaddedFieldSize  = kPaddedGCWidth * kPaddedGCWidth;
 
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
             // possible but cost more bandwidth. The speedup was ~x0.92.
-            __shared__ ReductionFloat Jx_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat Jy_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat Jz_scratch_space[kFieldScratchSpaceSize];
 
-            // Init the shared memory
+            __shared__ ReductionFloat Jx_scratch_space[kNBufferCopies][kPaddedFieldSize]; // Copie to reduce contention
+            __shared__ ReductionFloat Jy_scratch_space[kNBufferCopies][kPaddedFieldSize];
+            __shared__ ReductionFloat Jz_scratch_space[kNBufferCopies][kPaddedFieldSize];
+            //extern __shared__ ReductionFloat J_scratch_space[];
+            //ReductionFloat *Jx_scratch_space = J_scratch_space;
+            //ReductionFloat *Jy_scratch_space = (ReductionFloat*)&Jx_scratch_space[kFieldScratchSpaceSize];// ReductionFloat *Jy_scratch_space = &J_scratch_space[1*kFieldScratchSpaceSize];
+            //ReductionFloat *Jz_scratch_space = (ReductionFloat*)&Jy_scratch_space[kFieldScratchSpaceSize];// ReductionFloat *Jz_scratch_space = &J_scratch_space[2*kFieldScratchSpaceSize];
 
-            for( unsigned int field_index = thread_index_offset;
-                 field_index < kFieldScratchSpaceSize;
-                 field_index += workgroup_size ) {
-                Jx_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
-                Jy_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
-                Jz_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
+            const unsigned int buffer_copy_id = threadIdx.x % kNBufferCopies;
+
+            for( unsigned int copy = 0; copy < kNBufferCopies; ++copy ) {
+                for( unsigned int field_index = thread_index_offset;
+                     field_index < kPaddedFieldSize;
+                     field_index += workgroup_size ) {
+                    Jx_scratch_space[copy][field_index] = static_cast<ReductionFloat>( 0.0 );
+                    Jy_scratch_space[copy][field_index] = static_cast<ReductionFloat>( 0.0 );
+                    Jz_scratch_space[copy][field_index] = static_cast<ReductionFloat>( 0.0 );
+                }
             }
 
             __syncthreads();
@@ -191,22 +262,18 @@ namespace cudahip2d {
             const unsigned int first_particle = workgroup_dedicated_bin_index == 0 ? 0 : device_bin_index[workgroup_dedicated_bin_index - 1];
             const unsigned int last_particle  = device_bin_index[workgroup_dedicated_bin_index];
 
-            // The loop order is different depending on cell sorting
             unsigned int stride, start_thread, stop_thread;
             if( cell_sorting ) {
-                // With cell sorting, each thread should process close-by particles
-                // to reduce atomics. This uses more cache, but is still better
                 const unsigned int npart_thread = last_particle > first_particle ? ( last_particle - first_particle - 1 ) / workgroup_size + 1 : 0;
                 start_thread = first_particle + threadIdx.x * npart_thread;
                 stop_thread = std::min( { start_thread + npart_thread, last_particle } );
                 stride  = 1;
             } else {
-                // Without cell sorting, we keep the standard loops as particles
-                // are not ordered so that atomics are naturally rare
                 start_thread = first_particle + threadIdx.x;
                 stop_thread = last_particle;
                 stride = workgroup_size;
             }
+
             for( unsigned int particle_index = start_thread; particle_index < stop_thread; particle_index += stride ) {
                 const ComputeFloat invgf                  = static_cast<ComputeFloat>( device_invgf_[particle_index] );
                 const int *const __restrict__ iold        = &device_iold_[particle_index];
@@ -217,14 +284,15 @@ namespace cudahip2d {
                 ComputeFloat Sy0[5];
                 ComputeFloat Sy1[5];
 
-                // Variable declaration & initialization
                 // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
 
-                // Locate the particle on the primal grid at former time-step & calculate coeff. S0
+                // ── S0 coefficients ──────────────────────────────────
+                // deltaold values are already deltas in [-0.5, 0.5],
+                // stored as double in memory. Safe to cast to ComputeFloat
+                // (no catastrophic cancellation here).
                 {
-                    const ComputeFloat delta  = deltaold[0 * particle_count];
+                    const ComputeFloat delta  = static_cast<ComputeFloat>( deltaold[0 * particle_count] );  // Explicit cast
                     const ComputeFloat delta2 = delta * delta;
-
                     Sx0[0] = static_cast<ComputeFloat>( 0.0 );
                     Sx0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sx0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
@@ -232,32 +300,30 @@ namespace cudahip2d {
                     Sx0[4] = static_cast<ComputeFloat>( 0.0 );
                 }
                 {
-                    const ComputeFloat delta  = deltaold[1 * particle_count];
+                    const ComputeFloat delta  = static_cast<ComputeFloat>( deltaold[1 * particle_count] );  // Explicit cast
                     const ComputeFloat delta2 = delta * delta;
-
                     Sy0[0] = static_cast<ComputeFloat>( 0.0 );
                     Sy0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sy0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
                     Sy0[3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sy0[4] = static_cast<ComputeFloat>( 0.0 );
-                }//*/
-                //init_S0(deltaold[0 * particle_count], Sx0);
-                //init_S0(deltaold[1 * particle_count], Sy0);
+                }
 
-
-                // Locate the particle on the primal grid at current time-step & calculate coeff. S1
+                // ── S1 coefficients ──────────────────────────────────
+                // CRITICAL: position × dx_inv and xpn - ip MUST use
+                // ComputePositionFloat (double) to avoid catastrophic
+                // cancellation. The result (delta) is in [-0.5, 0.5]
+                // and safely cast to ComputeFloat for shape functions.
                 {
-                    // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-                    const int          ip       = std::round( xpn );
-                    const int          ipo      = iold[0 * particle_count];
-                    const int          ip_m_ipo = ip - ipo - i_domain_begin;
-                    const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
-                    const ComputeFloat delta2   = delta * delta;
+                    const ComputePositionFloat xpn   = static_cast<ComputePositionFloat>( device_particle_position_x[particle_index] ) * dx_inv;  // high precision
+                    const int          ip            = std::round( xpn );                                                                          // round in high precision
+                    const int          ipo           = iold[0 * particle_count];
+                    const int          ip_m_ipo      = ip - ipo - i_domain_begin;
+                    const ComputeFloat delta         = static_cast<ComputeFloat>( xpn - static_cast<ComputePositionFloat>( ip ) );                 // subtract in high precision, then narrow
+                    const ComputeFloat delta2        = delta * delta;
 
                     Sx1[0] = static_cast<ComputeFloat>( 0.0 );
                     Sx1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sx1[2] = 0.0; // Always set below
                     Sx1[3] = static_cast<ComputeFloat>( 0.0 );
                     Sx1[4] = static_cast<ComputeFloat>( 0.0 );
 
@@ -266,31 +332,25 @@ namespace cudahip2d {
                     Sx1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                 }
                 {
-                    // const int    jp             = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
-                    const int          jp       = std::round( ypn );
-                    const int          jpo      = iold[1 * particle_count];
-                    const int          jp_m_jpo = jp - jpo - j_domain_begin;
-                    const ComputeFloat delta    = ypn - static_cast<ComputeFloat>( jp );
-                    const ComputeFloat delta2   = delta * delta;
+                    const ComputePositionFloat ypn   = static_cast<ComputePositionFloat>( device_particle_position_y[particle_index] ) * dy_inv;  // high precision
+                    const int          jp            = std::round( ypn );                                                                          // round in high precision
+                    const int          jpo           = iold[1 * particle_count];
+                    const int          jp_m_jpo      = jp - jpo - j_domain_begin;
+                    const ComputeFloat delta         = static_cast<ComputeFloat>( ypn - static_cast<ComputePositionFloat>( jp ) );                 // subtract in high precision, then narrow
+                    const ComputeFloat delta2        = delta * delta;
 
                     Sy1[0] = static_cast<ComputeFloat>( 0.0 );
                     Sy1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sy1[2] = 0.0; // Always set below
                     Sy1[3] = static_cast<ComputeFloat>( 0.0 );
                     Sy1[4] = static_cast<ComputeFloat>( 0.0 );
 
                     Sy1[jp_m_jpo + 1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sy1[jp_m_jpo + 2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
                     Sy1[jp_m_jpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
-                }//*/
-                /*init_S1( static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv,
-                    iold[0 * particle_count], i_domain_begin, Sx1);
-                init_S1( static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv,
-                    iold[1 * particle_count], j_domain_begin, Sy1);//*/
+                }
 
-
-                // (x,y,z) components of the current density for the macro-particle
+                // ── Deposition weights ───────────────────────────────
+                // All in ComputeFloat (no cancellation risk)
                 const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
                 const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
                 const ComputeFloat cry_p         = charge_weight * dy_ov_dt;
@@ -300,164 +360,118 @@ namespace cudahip2d {
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
                 const int ipo = iold[0 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
-                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */ -
+                                (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
                 const int jpo = iold[1 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
-                                global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                                global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */ -
+                                (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
 
-                // Jx
-
+                // ── Jx deposition ────────────────────────────────────
                 ComputeFloat tmpJx[5]{};
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2 ) + jpo;
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<ComputeFloat>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
-                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
+                    atomic::LDS::AddNoReturn( &Jx_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<ComputeFloat>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
-                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
-                    }
-                }//*/
-
-                /*{
-                    ComputeFloat tmp = crx_p * static_cast<ComputeFloat>( 0.5 ) * Sy1[0] ;
-                    ComputeFloat tmp_reduction{};
-                    const int iloc = ipo *  GPUClusterWithGCWidth + jpo ;
-                    tmp_reduction -= Sx1[0] * tmp;
-                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmp_reduction ) );
-                    for( unsigned int i = 2; i < 5; ++i ) {
-                        tmp_reduction -= ( Sx1[i - 1] - Sx0[i - 2] ) * tmp;
-                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + i * GPUClusterWithGCWidth], static_cast<ReductionFloat>( tmp_reduction ) );
+                        atomic::LDS::AddNoReturn( &Jx_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
                     }
                 }
 
-                for( unsigned int j = 1; j < 4; ++j ) {
-                    ComputeFloat tmp = crx_p * ( Sy0[j-1] + static_cast<ComputeFloat>( 0.5 ) * ( Sy1[j] - Sy0[j-1] )) ;
-                    ComputeFloat tmp_reduction{};
-                    const int iloc = ipo *  GPUClusterWithGCWidth + jpo + j;
-                    tmp_reduction -= Sx1[0] * tmp;
-                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmp_reduction ) );
-                    for( unsigned int i = 2; i < 5; ++i ) {
-                        tmp_reduction -= ( Sx1[i - 1] - Sx0[i - 2] ) * tmp;
-                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + i * GPUClusterWithGCWidth], static_cast<ReductionFloat>( tmp_reduction ) );
-                    }
-                }//*/
-
-
-                // Jy
-
+                // ── Jy deposition ────────────────────────────────────
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2  ) + jpo;
+                    const int    iloc = ( i + ipo ) * PaddedGCWidth + jpo;
                     ComputeFloat tmp{};
                     for( unsigned int j = 1; j < 5; j++ ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
+                        atomic::LDS::AddNoReturn( &Jy_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( tmp ) );
                     }
                 }
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2  ) + jpo;
+                    const int    iloc = ( i + ipo ) * PaddedGCWidth + jpo;
                     ComputeFloat tmp{};
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
-                    }
-                }//*/
-                /*{
-                    ComputeFloat tmp = cry_p * Sy1[0] * one_half;
-                    const int    iloc = ( ipo ) * GPUClusterWithGCWidth + jpo;
-                    ComputeFloat tmp_reduction{};
-                    tmp_reduction -= Sx1[0] * tmp;
-                    atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc], static_cast<ReductionFloat>( tmp_reduction ) );
-                    for( unsigned int i = 1; i < 5; ++i ) {
-                        tmp_reduction -= tmp * ( Sx0[i-1] +  Sx1[i] );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + i * GPUClusterWithGCWidth], static_cast<ReductionFloat>( tmp_reduction ) );
+                        atomic::LDS::AddNoReturn( &Jy_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( tmp ) );
                     }
                 }
 
-
-                for( unsigned int j = 2; j < 5; ++j ) {
-                     ComputeFloat tmp = cry_p * ( Sy1[j - 1] - Sy0[j - 2] ) * one_half;
-                    const int    iloc = ( ipo ) * GPUClusterWithGCWidth + jpo + j;
-                    ComputeFloat tmp_reduction{};
-                    tmp_reduction -= Sx1[0] * tmp;
-                    atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc], static_cast<ReductionFloat>( tmp_reduction ) );
-                    for( unsigned int i = 1; i < 5; ++i ) {
-                        tmp_reduction -= tmp * ( Sx0[i-1] +  Sx1[i] );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + i * GPUClusterWithGCWidth], static_cast<ReductionFloat>( tmp_reduction ) );
-                    }
-                }//*/
-
-
-                // Jz
-
+                // ── Jz deposition ────────────────────────────────────
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2  ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * (  Sx1[i] ) ) ) );
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
+                    atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( Sx1[i] ) ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i]  ) +
-                                                                                                                      Sy1[j] * (  Sx1[i] ) ) ) );
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] ) +
+                                                                                                                      Sy1[j] * ( Sx1[i] ) ) ) );
                     }
                 }
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 , 2  ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
+                    atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
                                                                                                                       Sy1[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
                     }
-                }//*/
-                /*{
-                    ComputeFloat tmp = crz_p * Sx1[0];
-                    const int iloc = ipo * GPUClusterWithGCWidth + jpo;
-                     atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( tmp *  Sy1[0]) );
-                    for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp * (Sy0[j-1] * one_half + Sy1[j]) ) );
-                    }
                 }
-
-                for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * GPUClusterWithGCWidth + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( one_half * Sx0[i-1] + Sx1[i] ) ) ) );
-                    for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j-1] * ( one_half * Sx1[i] + Sx0[i-1] ) +
-                                                                                                                      Sy1[j] * ( one_half * Sx0[i-1] + Sx1[i] ) ) ) );
-                    }
-                }//*/
-
             }
 
             __syncthreads();
 
+            // Reduction (no-op when kNBufferCopies=1)
+            for( unsigned int copy = 1; copy < kNBufferCopies; ++copy ) {
+                for( unsigned int field_index = thread_index_offset;
+                     field_index < kPaddedFieldSize;
+                     field_index += workgroup_size ) {
+                    Jx_scratch_space[0][field_index] += Jx_scratch_space[copy][field_index];
+                    Jy_scratch_space[0][field_index] += Jy_scratch_space[copy][field_index];
+                    Jz_scratch_space[0][field_index] += Jz_scratch_space[copy][field_index];
+                }
+            }
+
+            if( kNBufferCopies > 1 ) {
+                __syncthreads();
+            }
+
+            // Flush shared memory to global memory
             for( unsigned int field_index = thread_index_offset;
-                 field_index < kFieldScratchSpaceSize;
+                 field_index < kPaddedFieldSize;
                  field_index += workgroup_size ) {
 
-                // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / GPUClusterWithGCWidth;
-                const unsigned int local_y_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
+                const unsigned int local_x = field_index / PaddedGCWidth;
+                const unsigned int local_y = field_index % PaddedGCWidth;
 
-                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
-                const unsigned int global_y_scratch_space_coordinate = global_y_scratch_space_coordinate_offset + local_y_scratch_space_coordinate;
+                if( kShmemPad > 0 ) {
+                    if( local_x >= static_cast<unsigned int>(GPUClusterWithGCWidth) ||
+                        local_y >= static_cast<unsigned int>(GPUClusterWithGCWidth) ) {
+                        continue;
+                    }
+                }
 
-                // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate;
-                const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
+                const unsigned int global_x = global_x_scratch_space_coordinate_offset + local_x + (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
+                const unsigned int global_y = global_y_scratch_space_coordinate_offset + local_y + (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
 
-                // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
+                const unsigned int global_memory_index = global_x * nprimy + global_y;
+
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[0][field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + not_spectral_ * global_x], static_cast<double>( Jy_scratch_space[0][field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[0][field_index] ) );
             }
-        } // end DepositCurrent
+        } // end DepositCurrentDensity_2D_Order2
 
+        // ====================================================================
+        // Current + Density deposition kernel (Jx, Jy, Jz, rho)
+        // ====================================================================
 
         template <typename ComputeFloat,
+                  typename ComputePositionFloat,       // NEW
                   typename ReductionFloat,
-                  std::size_t kWorkgroupSize>
+                  std::size_t kWorkgroupSize,
+                  std::size_t kNBufferCopies,
+                  std::size_t kShmemPad,
+                  std::size_t kMinBlocksPerSM>
         __global__ void
-        // __launch_bounds__(kWorkgroupSize, 1)
+        __launch_bounds__(kWorkgroupSize, kMinBlocksPerSM)
         DepositCurrentAndDensity_2D_Order2( double *__restrict__ device_Jx,
                                             double *__restrict__ device_Jy,
                                             double *__restrict__ device_Jz,
@@ -476,59 +490,59 @@ namespace cudahip2d {
                                             const int *__restrict__ device_iold_,
                                             const double *__restrict__ device_deltaold_,
                                             ComputeFloat inv_cell_volume,
-                                            ComputeFloat dx_inv,
-                                            ComputeFloat dy_inv,
+                                            ComputePositionFloat dx_inv,  // Position precision
+                                            ComputePositionFloat dy_inv,  // Position precision
                                             ComputeFloat dx_ov_dt,
                                             ComputeFloat dy_ov_dt,
                                             int          i_domain_begin,
                                             int          j_domain_begin,
                                             int          nprimy,
                                             int          not_spectral_,
+                                            unsigned int oversize_,
                                             bool         cell_sorting )
         {
-            // TODO(Etienne M): refactor this function. Break it into smaller
-            // pieces (lds init/store, coeff computation, deposition etc..)
-            // TODO(Etienne M): __ldg could be used to slightly improve GDS load
-            // speed. This would only have an effect on Nvidia cards as this
-            // operation is a no op on AMD.
-            const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
+            const unsigned int workgroup_size = kWorkgroupSize;
             const unsigned int bin_count      = gridDim.x * gridDim.y;
 
             const unsigned int x_cluster_coordinate          = blockIdx.x;
             const unsigned int y_cluster_coordinate          = blockIdx.y;
-            const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y + y_cluster_coordinate; // The indexing order is: x * ywidth * zwidth + y * zwidth + z
+            const unsigned int workgroup_dedicated_bin_index = x_cluster_coordinate * gridDim.y + y_cluster_coordinate;
             const unsigned int thread_index_offset           = threadIdx.x;
 
-            // The unit is the cell
-            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
-            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 /* 2D */ );
+            const unsigned int global_x_scratch_space_coordinate_offset = x_cluster_coordinate * Params::getGPUClusterWidth( 2 );
+            const unsigned int global_y_scratch_space_coordinate_offset = y_cluster_coordinate * Params::getGPUClusterWidth( 2 );
 
-            // NOTE: We gain from the particles not being sorted inside a
-            // cluster because it reduces the bank conflicts one gets when
-            // multiple threads access the same part of the shared memory. Such
-            // "conflicted" accesses are serialized !
-            // NOTE: We use a bit to much LDS. For Jx, the first row could be
-            // discarded, for Jy we could remove the first column.
+            const int GPUClusterWithGCWidth = Params::getGPUClusterWithGhostCellWidth( 2, 2 );
+            const int PaddedGCWidth = GPUClusterWithGCWidth + static_cast<int>( kShmemPad ); // To reduce Bank Conflict
 
-            static constexpr unsigned int kFieldScratchSpaceSize = Params::getGPUInterpolationClusterCellVolume( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+            static constexpr unsigned int kLogicalGCWidth   = Params::getGPUClusterWithGhostCellWidth( 2, 2 );
+            static constexpr unsigned int kPaddedGCWidth    = kLogicalGCWidth + kShmemPad;
+            static constexpr unsigned int kPaddedFieldSize  = kPaddedGCWidth * kPaddedGCWidth;
 
             // NOTE: I tried having only one cache and reusing it. Doing that
             // requires you to iterate multiple time over the particle which is
             // possible but cost more bandwidth. The speedup was ~x0.92.
-            __shared__ ReductionFloat Jx_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat Jy_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat Jz_scratch_space[kFieldScratchSpaceSize];
-            __shared__ ReductionFloat rho_scratch_space[kFieldScratchSpaceSize];
+            __shared__ ReductionFloat Jx_scratch_space[kNBufferCopies][kPaddedFieldSize]; // Copie to reduce contention
+            __shared__ ReductionFloat Jy_scratch_space[kNBufferCopies][kPaddedFieldSize];
+            __shared__ ReductionFloat Jz_scratch_space[kNBufferCopies][kPaddedFieldSize];
+            __shared__ ReductionFloat rho_scratch_space[kNBufferCopies][kPaddedFieldSize];
+            //extern __shared__ ReductionFloat Jrho_scratch_space[];
+            //ReductionFloat *Jx_scratch_space = Jrho_scratch_space;
+            //ReductionFloat *Jy_scratch_space = (ReductionFloat*)&Jx_scratch_space[kFieldScratchSpaceSize]; //ReductionFloat *Jy_scratch_space = Jrho_scratch_space[1*kFieldScratchSpaceSize];
+            //ReductionFloat *Jz_scratch_space = (ReductionFloat*)&Jy_scratch_space[kFieldScratchSpaceSize]; //ReductionFloat *Jz_scratch_space = Jrho_scratch_space[2*kFieldScratchSpaceSize];
+            //ReductionFloat *rho_scratch_space = (ReductionFloat*)&Jz_scratch_space[kFieldScratchSpaceSize]; //ReductionFloat *rho_scratch_space = Jrho_scratch_space[3*kFieldScratchSpaceSize];
 
-            // Init the shared memory
+            const unsigned int buffer_copy_id = threadIdx.x % kNBufferCopies;
 
-            for( unsigned int field_index = thread_index_offset;
-                 field_index < kFieldScratchSpaceSize;
-                 field_index += workgroup_size ) {
-                Jx_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
-                Jy_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
-                Jz_scratch_space[field_index]  = static_cast<ReductionFloat>( 0.0 );
-                rho_scratch_space[field_index] = static_cast<ReductionFloat>( 0.0 );
+            for( unsigned int copy = 0; copy < kNBufferCopies; ++copy ) {
+                for( unsigned int field_index = thread_index_offset;
+                     field_index < kPaddedFieldSize;
+                     field_index += workgroup_size ) {
+                    Jx_scratch_space[copy][field_index]  = static_cast<ReductionFloat>( 0.0 );
+                    Jy_scratch_space[copy][field_index]  = static_cast<ReductionFloat>( 0.0 );
+                    Jz_scratch_space[copy][field_index]  = static_cast<ReductionFloat>( 0.0 );
+                    rho_scratch_space[copy][field_index] = static_cast<ReductionFloat>( 0.0 );
+                }
             }
 
             __syncthreads();
@@ -559,17 +573,11 @@ namespace cudahip2d {
                 ComputeFloat Sx1[5];
                 ComputeFloat Sy0[5];
                 ComputeFloat Sy1[5];
-                // double DSx[5];
-                // double DSy[5];
 
-                // Variable declaration & initialization
-                // Esirkepov's paper: https://arxiv.org/pdf/physics/9901047.pdf
-
-                // Locate the particle on the primal grid at former time-step & calculate coeff. S0
+                // ── S0 coefficients ──────────────────────────────────
                 {
-                    const ComputeFloat delta  = deltaold[0 * particle_count];
+                    const ComputeFloat delta  = static_cast<ComputeFloat>( deltaold[0 * particle_count] );  // explicit cast
                     const ComputeFloat delta2 = delta * delta;
-
                     Sx0[0] = static_cast<ComputeFloat>( 0.0 );
                     Sx0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sx0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
@@ -577,9 +585,8 @@ namespace cudahip2d {
                     Sx0[4] = static_cast<ComputeFloat>( 0.0 );
                 }
                 {
-                    const ComputeFloat delta  = deltaold[1 * particle_count];
+                    const ComputeFloat delta  = static_cast<ComputeFloat>( deltaold[1 * particle_count] );  // explicit cast
                     const ComputeFloat delta2 = delta * delta;
-
                     Sy0[0] = static_cast<ComputeFloat>( 0.0 );
                     Sy0[1] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 - delta + static_cast<ComputeFloat>( 0.25 ) );
                     Sy0[2] = static_cast<ComputeFloat>( 0.75 ) - delta2;
@@ -587,19 +594,18 @@ namespace cudahip2d {
                     Sy0[4] = static_cast<ComputeFloat>( 0.0 );
                 }
 
-                // Locate the particle on the primal grid at current time-step & calculate coeff. S1
+                // ── S1 coefficients ──────────────────────────────────
+                // [v4] Position calculation in ComputePositionFloat
                 {
-                    // const int    ip             = static_cast<int>( xpn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat xpn      = static_cast<ComputeFloat>( device_particle_position_x[particle_index] ) * dx_inv;
-                    const int          ip       = std::round( xpn );
-                    const int          ipo      = iold[0 * particle_count];
-                    const int          ip_m_ipo = ip - ipo - i_domain_begin;
-                    const ComputeFloat delta    = xpn - static_cast<ComputeFloat>( ip );
-                    const ComputeFloat delta2   = delta * delta;
+                    const ComputePositionFloat xpn   = static_cast<ComputePositionFloat>( device_particle_position_x[particle_index] ) * dx_inv;  //
+                    const int          ip            = std::round( xpn );                                                                          //
+                    const int          ipo           = iold[0 * particle_count];
+                    const int          ip_m_ipo      = ip - ipo - i_domain_begin;
+                    const ComputeFloat delta         = static_cast<ComputeFloat>( xpn - static_cast<ComputePositionFloat>( ip ) );                 // [v4]
+                    const ComputeFloat delta2        = delta * delta;
 
                     Sx1[0] = static_cast<ComputeFloat>( 0.0 );
                     Sx1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sx1[2] = 0.0; // Always set below
                     Sx1[3] = static_cast<ComputeFloat>( 0.0 );
                     Sx1[4] = static_cast<ComputeFloat>( 0.0 );
 
@@ -608,17 +614,15 @@ namespace cudahip2d {
                     Sx1[ip_m_ipo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                 }
                 {
-                    // const int    jp             = static_cast<int>( ypn + 0.5 ); // std::round | rounding approximation which is correct enough and faster in this case
-                    const ComputeFloat ypn      = static_cast<ComputeFloat>( device_particle_position_y[particle_index] ) * dy_inv;
-                    const int          jp       = std::round( ypn );
-                    const int          jpo      = iold[1 * particle_count];
-                    const int          jp_m_jpo = jp - jpo - j_domain_begin;
-                    const ComputeFloat delta    = ypn - static_cast<ComputeFloat>( jp );
-                    const ComputeFloat delta2   = delta * delta;
+                    const ComputePositionFloat ypn   = static_cast<ComputePositionFloat>( device_particle_position_y[particle_index] ) * dy_inv;  //
+                    const int          jp            = std::round( ypn );                                                                          //
+                    const int          jpo           = iold[1 * particle_count];
+                    const int          jp_m_jpo      = jp - jpo - j_domain_begin;
+                    const ComputeFloat delta         = static_cast<ComputeFloat>( ypn - static_cast<ComputePositionFloat>( jp ) );                 //
+                    const ComputeFloat delta2        = delta * delta;
 
                     Sy1[0] = static_cast<ComputeFloat>( 0.0 );
                     Sy1[1] = static_cast<ComputeFloat>( 0.0 );
-                    // Sy1[2] = 0.0; // Always set below
                     Sy1[3] = static_cast<ComputeFloat>( 0.0 );
                     Sy1[4] = static_cast<ComputeFloat>( 0.0 );
 
@@ -627,7 +631,7 @@ namespace cudahip2d {
                     Sy1[jp_m_jpo + 3] = static_cast<ComputeFloat>( 0.5 ) * ( delta2 + delta + static_cast<ComputeFloat>( 0.25 ) );
                 }
 
-                // (x,y,z) components of the current density for the macro-particle
+                // ── Deposition weights ───────────────────────────────
                 const ComputeFloat charge_weight = inv_cell_volume * static_cast<ComputeFloat>( device_particle_charge[particle_index] ) * static_cast<ComputeFloat>( device_particle_weight[particle_index] );
                 const ComputeFloat crx_p         = charge_weight * dx_ov_dt;
                 const ComputeFloat cry_p         = charge_weight * dy_ov_dt;
@@ -637,111 +641,129 @@ namespace cudahip2d {
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
                 const int ipo = iold[0 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
-                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */-
+                                (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
                 const int jpo = iold[1 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
-                                global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                                global_y_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */-
+                                (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
 
-                // Jx
-
+                // ── Jx deposition ────────────────────────────────────
                 ComputeFloat tmpJx[5]{};
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
                     tmpJx[0] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( static_cast<ComputeFloat>( 0.5 ) * ( Sy1[0] - Sy0[0] ) );
-                    atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
+                    atomic::LDS::AddNoReturn( &Jx_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( tmpJx[0] ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmpJx[j] -= crx_p * ( Sx1[i - 1] - Sx0[i - 1] ) * ( Sy0[j] + static_cast<ComputeFloat>( 0.5 ) * ( Sy1[j] - Sy0[j] ) );
-                        atomic::LDS::AddNoReturn( &Jx_scratch_space[iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
+                        atomic::LDS::AddNoReturn( &Jx_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( tmpJx[j] ) );
                     }
                 }
 
-                // Jy
-
+                // ── Jy deposition ────────────────────────────────────
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
+                    const int    iloc = ( i + ipo ) * PaddedGCWidth + jpo;
                     ComputeFloat tmp{};
                     for( unsigned int j = 1; j < 5; j++ ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
+                        atomic::LDS::AddNoReturn( &Jy_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( tmp ) );
                     }
                 }
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int    iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
+                    const int    iloc = ( i + ipo ) * PaddedGCWidth + jpo;
                     ComputeFloat tmp{};
                     for( unsigned int j = 1; j < 5; ++j ) {
                         tmp -= cry_p * ( Sy1[j - 1] - Sy0[j - 1] ) * ( Sx0[i] + static_cast<ComputeFloat>( 0.5 ) * ( Sx1[i] - Sx0[i] ) );
-                        atomic::LDS::AddNoReturn( &Jy_scratch_space[iloc + j], static_cast<ReductionFloat>( tmp ) );
+                        atomic::LDS::AddNoReturn( &Jy_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( tmp ) );
                     }
                 }
 
-                // Jz
-
+                // ── Jz deposition ────────────────────────────────────
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) ) );
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
+                    atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( Sx1[i] ) ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] /* + Sx0[i] */ ) +
-                                                                                                                      Sy1[j] * ( /* 0.5 * Sx0[i] + */ Sx1[i] ) ) ) );
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] ) +
+                                                                                                                      Sy1[j] * ( Sx1[i] ) ) ) );
                     }
                 }
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
+                    atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( crz_p * ( Sy1[0] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &Jz_scratch_space[iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
+                        atomic::LDS::AddNoReturn( &Jz_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( crz_p * ( Sy0[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx1[i] + Sx0[i] ) +
                                                                                                                       Sy1[j] * ( static_cast<ComputeFloat>( 0.5 ) * Sx0[i] + Sx1[i] ) ) ) );
                     }
                 }
 
-                // Rho
+                // ── Rho deposition ───────────────────────────────────
                 for( unsigned int i = 0; i < 1; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &rho_scratch_space[iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[0] * Sy1[i] ) ) );
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
+                    atomic::LDS::AddNoReturn( &rho_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[0] * Sy1[i] ) ) );
                     for( unsigned int j = 1; j < 5; j++ ) {
-                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[0] * Sy1[j] ) ) );
+                        atomic::LDS::AddNoReturn( &rho_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[0] * Sy1[j] ) ) );
                     }
                 }
-
                 for( unsigned int i = 1; i < 5; ++i ) {
-                    const int iloc = ( i + ipo ) * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + jpo;
-                    atomic::LDS::AddNoReturn( &rho_scratch_space[iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[0] ) ) );
+                    const int iloc = ( i + ipo ) * PaddedGCWidth + jpo;
+                    atomic::LDS::AddNoReturn( &rho_scratch_space[buffer_copy_id][iloc], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[0] ) ) );
                     for( unsigned int j = 1; j < 5; ++j ) {
-                        atomic::LDS::AddNoReturn( &rho_scratch_space[iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[j] ) ) );
+                        atomic::LDS::AddNoReturn( &rho_scratch_space[buffer_copy_id][iloc + j], static_cast<ReductionFloat>( charge_weight * ( Sx1[i] * Sy1[j] ) ) );
                     }
                 }
             }
 
             __syncthreads();
 
+            // Reduction
+            for( unsigned int copy = 1; copy < kNBufferCopies; ++copy ) {
+                for( unsigned int field_index = thread_index_offset;
+                     field_index < kPaddedFieldSize;
+                     field_index += workgroup_size ) {
+                    Jx_scratch_space[0][field_index]  += Jx_scratch_space[copy][field_index];
+                    Jy_scratch_space[0][field_index]  += Jy_scratch_space[copy][field_index];
+                    Jz_scratch_space[0][field_index]  += Jz_scratch_space[copy][field_index];
+                    rho_scratch_space[0][field_index] += rho_scratch_space[copy][field_index];
+                }
+            }
+
+            if( kNBufferCopies > 1 ) {
+                __syncthreads();
+            }
+
+            // Flush to global memory
             for( unsigned int field_index = thread_index_offset;
-                 field_index < kFieldScratchSpaceSize;
+                 field_index < kPaddedFieldSize;
                  field_index += workgroup_size ) {
 
-                // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int local_x_scratch_space_coordinate = field_index / Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
-                const unsigned int local_y_scratch_space_coordinate = field_index % Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ );
+                const unsigned int local_x = field_index / PaddedGCWidth;
+                const unsigned int local_y = field_index % PaddedGCWidth;
 
-                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
-                const unsigned int global_y_scratch_space_coordinate = global_y_scratch_space_coordinate_offset + local_y_scratch_space_coordinate;
+                if( kShmemPad > 0 ) {
+                    if( local_x >= static_cast<unsigned int>(GPUClusterWithGCWidth) ||
+                        local_y >= static_cast<unsigned int>(GPUClusterWithGCWidth) ) {
+                        continue;
+                    }
+                }
 
-                // The indexing order is: x * ywidth * zwidth + y * zwidth + z
-                const unsigned int global_memory_index = global_x_scratch_space_coordinate * nprimy + global_y_scratch_space_coordinate;
-                const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * Params::getGPUClusterWithGhostCellWidth( 2 /* 2D */, 2 /* 2nd order interpolation */ ) + local_y_scratch_space_coordinate;
+                const unsigned int global_x = global_x_scratch_space_coordinate_offset + local_x + (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
+                const unsigned int global_y = global_y_scratch_space_coordinate_offset + local_y + (oversize_-2) /* Offset to get in-cluster coordinate with an oversize > 2*/ ;
 
-                // These atomics are basically free (very few of them).
-                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + /* We handle the FTDT/picsar */ not_spectral_ * global_x_scratch_space_coordinate], static_cast<double>( Jy_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[scratch_space_index] ) );
-                atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[scratch_space_index] ) );
+                const unsigned int global_memory_index = global_x * nprimy + global_y;
+
+                atomic::GDS::AddNoReturn( &device_Jx[global_memory_index], static_cast<double>( Jx_scratch_space[0][field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jy[global_memory_index + not_spectral_ * global_x], static_cast<double>( Jy_scratch_space[0][field_index] ) );
+                atomic::GDS::AddNoReturn( &device_Jz[global_memory_index], static_cast<double>( Jz_scratch_space[0][field_index] ) );
+                atomic::GDS::AddNoReturn( &device_rho[global_memory_index], static_cast<double>( rho_scratch_space[0][field_index] ) );
             }
         }
     } // namespace kernel
 
 
-    //static inline
+    // ====================================================================
+    // Launch wrapper: Current deposition (Jx, Jy, Jz)
+    // ====================================================================
+
     void
     currentDepositionKernel2D( double *__restrict__ host_Jx,
                              double *__restrict__ host_Jy,
@@ -769,36 +791,45 @@ namespace cudahip2d {
                              int    j_domain_begin,
                              int    nprimy,
                              int    not_spectral_,
+                             unsigned int oversize_,
                              bool   cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
 
-        // NOTE:
-        // This cluster is very strongly bound by atomic operations in LDS (shared memory)
-        // TODO(Etienne M): Find a way to lessen the atomic usage
-
         const ::dim3 kGridDimension  { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
 
-        static constexpr std::size_t kWorkgroupSize = 128;
-        const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
+        // ================================================================
+        // ▼▼▼ TUNING PARAMETERS — ADJUST THESE ▼▼▼
+        // ================================================================
 
-        // NOTE: On cards lacking hardware backed Binary64 atomic operations,
-        // falling back to Binary32 (supposing hardware support for atomic
-        // operations) can lead to drastic performance improvement.
-        // One just need to assign 'float' to ReductionFloat.
-        //
-        using ComputeFloat   = double;
-        using ReductionFloat = double;
+        static constexpr std::size_t kWorkgroupSize   = 256;
+        static constexpr std::size_t kNBufferCopies   = 1; // Very important to reduce contention, 1: Legacy. 8: is good
+        static constexpr std::size_t kShmemPad        = 0; // 0: Legacy. 2: NCU give a local minimum
+        static constexpr std::size_t kMinBlocksPerSM  = 1; // 1: Legacy. 6: NCU give a local minimum
 
-        auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        //static constexpr std::size_t kWorkgroupSize   = 256;
+        //static constexpr std::size_t kNBufferCopies   = 8;
+        //static constexpr std::size_t kShmemPad        = 2;
+        //static constexpr std::size_t kMinBlocksPerSM  = 6;
+
+        // ================================================================
+        // ▲▲▲ END TUNING PARAMETERS ▲▲▲
+        // ================================================================
+
+        const ::dim3 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
+
+        // Type aliases — change ComputeFloat to float for mixed precision
+        using ComputeFloat         = double;  // ← set to float for mixed precision mode
+        using ComputePositionFloat = double;  // ← always double (position safety)
+        using ReductionFloat       = double;  // ← set to float for mixed precision mode
+
+        auto KernelFunction = kernel::DepositCurrentDensity_2D_Order2<ComputeFloat, ComputePositionFloat, ReductionFloat, kWorkgroupSize, kNBufferCopies, kShmemPad, kMinBlocksPerSM>;
 #if defined ( __HIP__ ) 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
-                            0, // Shared memory
-                            0, // Stream
-                            // Kernel arguments
+                            0, 0,
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
@@ -812,21 +843,22 @@ namespace cudahip2d {
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
-                            inv_cell_volume,
-                            dx_inv, dy_inv,
-                            dx_ov_dt, dy_ov_dt,
+                            static_cast<ComputeFloat>( inv_cell_volume ),
+                            static_cast<ComputePositionFloat>( dx_inv ),    // kept as double
+                            static_cast<ComputePositionFloat>( dy_inv ),    // kept as double
+                            static_cast<ComputeFloat>( dx_ov_dt ),
+                            static_cast<ComputeFloat>( dy_ov_dt ),
                             i_domain_begin, j_domain_begin,
                             nprimy,
                             not_spectral_,
+                            oversize_,
                             cell_sorting );
-
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
         KernelFunction <<<
                             kGridDimension,
                             kBlockDimension,
-                            0, // Shared memory
-                            0 // Stream
+                            0, 0
                        >>>
                        (
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
@@ -842,19 +874,26 @@ namespace cudahip2d {
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
-                            inv_cell_volume,
-                            dx_inv, dy_inv,
-                            dx_ov_dt, dy_ov_dt,
+                            static_cast<ComputeFloat>( inv_cell_volume ),
+                            static_cast<ComputePositionFloat>( dx_inv ),    // kept as double
+                            static_cast<ComputePositionFloat>( dy_inv ),    // kept as double
+                            static_cast<ComputeFloat>( dx_ov_dt ),
+                            static_cast<ComputeFloat>( dy_ov_dt ),
                             i_domain_begin, j_domain_begin,
                             nprimy,
                             not_spectral_,
+                            oversize_,
                             cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif
     }
 
-    //static inline 
+
+    // ====================================================================
+    // Launch wrapper: Current + Density deposition (Jx, Jy, Jz, rho)
+    // ====================================================================
+
     void
     currentAndDensityDepositionKernel2D( double *__restrict__ host_Jx,
                                        double *__restrict__ host_Jy,
@@ -884,35 +923,45 @@ namespace cudahip2d {
                                        int    j_domain_begin,
                                        int    nprimy,
                                        int    not_spectral_,
+                                       unsigned int oversize_,
                                        bool cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 2 /* 2D */ ) != -1 &&
                        Params::getGPUClusterGhostCellBorderWidth( 2 /* 2nd order interpolation */ ) != -1 );
 
-        // NOTE:
-        // This cluster is very strongly bound by atomic operations in LDS (shared memory)
-        // TODO(Etienne M): Find a way to lessen the atomic usage
-
         const ::dim3 kGridDimension  { static_cast<uint32_t>( x_dimension_bin_count ), static_cast<uint32_t>( y_dimension_bin_count ), 1 };
 
-        static constexpr std::size_t kWorkgroupSize = 128;
-        const ::dim3                 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
+        // ================================================================
+        // ▼▼▼ TUNING PARAMETERS — ADJUST THESE ▼▼▼
+        // ================================================================
 
-        // NOTE: On cards lacking hardware backed Binary64 atomic operations,
-        // falling back to Binary32 (supposing hardware support for atomic
-        // operations) can lead to drastic performance improvement.
-        // One just need to assign 'float' to ReductionFloat.
-        //
-        using ComputeFloat   = double;
-        using ReductionFloat = double;
-        auto KernelFunction = kernel::DepositCurrentAndDensity_2D_Order2<ComputeFloat, ReductionFloat, kWorkgroupSize>;
+        static constexpr std::size_t kWorkgroupSize   = 256;
+        static constexpr std::size_t kNBufferCopies   = 1; // Very important to reduce contention, 1: Legacy. 8: is good
+        static constexpr std::size_t kShmemPad        = 0; // 0: Legacy. 2: NCU give a local minimum
+        static constexpr std::size_t kMinBlocksPerSM  = 1; // 1: Legacy. 6: NCU give a local minimum
+
+        //static constexpr std::size_t kWorkgroupSize   = 256;
+        //static constexpr std::size_t kNBufferCopies   = 8;
+        //static constexpr std::size_t kShmemPad        = 2;
+        //static constexpr std::size_t kMinBlocksPerSM  = 6;
+
+        // ================================================================
+        // ▲▲▲ END TUNING PARAMETERS ▲▲▲
+        // ================================================================
+
+        const ::dim3 kBlockDimension{ static_cast<uint32_t>( kWorkgroupSize ), 1, 1 };
+
+        // Type aliases — change ComputeFloat to float for mixed precision
+        using ComputeFloat         = double;  // ← set to float for mixed precision mode
+        using ComputePositionFloat = double;  // ← always double (position safety)
+        using ReductionFloat       = double;  // ← set to float for mixed precision mode
+
+        auto KernelFunction = kernel::DepositCurrentAndDensity_2D_Order2<ComputeFloat, ComputePositionFloat, ReductionFloat, kWorkgroupSize, kNBufferCopies, kShmemPad, kMinBlocksPerSM>;
 #if defined ( __HIP__ ) 
         hipLaunchKernelGGL( KernelFunction,
                             kGridDimension,
                             kBlockDimension,
-                            0, // Shared memory
-                            0, // Stream
-                            // Kernel arguments
+                            0, 0,
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jy ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jz ),
@@ -927,21 +976,22 @@ namespace cudahip2d {
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
-                            inv_cell_volume,
-                            dx_inv, dy_inv,
-                            dx_ov_dt, dy_ov_dt,
+                            static_cast<ComputeFloat>( inv_cell_volume ),
+                            static_cast<ComputePositionFloat>( dx_inv ),    // kept as double
+                            static_cast<ComputePositionFloat>( dy_inv ),    // kept as double
+                            static_cast<ComputeFloat>( dx_ov_dt ),
+                            static_cast<ComputeFloat>( dy_ov_dt ),
                             i_domain_begin, j_domain_begin,
                             nprimy,
                             not_spectral_,
+                            oversize_,
                             cell_sorting );
-
         checkHIPErrors( ::hipDeviceSynchronize() );
 #elif defined (  __NVCC__ )
         KernelFunction <<<
                             kGridDimension,
                             kBlockDimension,
-                            0, // Shared memory
-                            0 // Stream
+                            0, 0
                        >>>
                        (
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_Jx ),
@@ -958,18 +1008,21 @@ namespace cudahip2d {
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_invgf_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_iold_ ),
                             smilei::tools::gpu::HostDeviceMemoryManagement::GetDevicePointer( host_deltaold_ ),
-                            inv_cell_volume,
-                            dx_inv, dy_inv,
-                            dx_ov_dt, dy_ov_dt,
+                            static_cast<ComputeFloat>( inv_cell_volume ),
+                            static_cast<ComputePositionFloat>( dx_inv ),    // kept as double
+                            static_cast<ComputePositionFloat>( dy_inv ),    // kept as double
+                            static_cast<ComputeFloat>( dx_ov_dt ),
+                            static_cast<ComputeFloat>( dy_ov_dt ),
                             i_domain_begin, j_domain_begin,
                             nprimy,
                             not_spectral_,
+                            oversize_,
                             cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
 #endif 
     }
 
-} // namespace hipcuda
+} // namespace cudahip2d
 
 #endif

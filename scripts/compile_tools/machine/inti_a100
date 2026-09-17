@@ -1,0 +1,39 @@
+#
+# Machine file for Inti A100 partition 
+# __________________________________________________________
+#
+# Documentation:
+# https://www-hpc.cea.fr/tgcc-public/en/html/tgcc-public.htm
+#
+# 
+# module purge
+# 
+# module load python3
+# module load nvhpc/25.7 mpi/openmpi/5
+# module load flavor/hdf5/parallel hdf5/1.14.6
+# $MATH_NVIDIA_INCDIR 
+# 
+# export SMILEICXX=mpic++
+# export PYTHONEXE=python3
+# export PYTHONHOME=$PYTHON3_ROOT
+#
+# make clean
+# 
+# make -j 8 machine="inti_a100" config="gpu_nvidia"
+
+
+SMILEICXX_DEPS = nvc++ -I$(MPI_ROOT)/include -I$(HDF5_INCDIR)
+GPU_COMPILER = nvcc -I$(MPI_ROOT)/include -I$(HDF5_INCDIR)
+
+CXXFLAGS += -w 
+CXXFLAGS += -O3 -tp=native -acc=gpu -gpu=sm_80,lineinfo,fastmath,flushz -std=c++14 -L$(MATH_NVIDIA_LIBDIR) -lcurand -cudalib
+CXXFLAGS += -Minfo=accel # what is offloaded/copied
+CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
+CXXFLAGS += -I$(MATH_NVIDIA_INCDIR)
+
+#GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_80 --use_fast_math
+GPU_COMPILER_FLAGS += -O3 --std c++14 -gencode arch=compute_80,code=sm_80 --ftz=true --prec-div=false --fmad=true --use_fast_math
+GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
+GPU_COMPILER_FLAGS += -lineinfo
+
+LDFLAGS += -acc=gpu -O3 -gpu=sm_80 -std=c++14 -cudalib=curand -L$(PYTHON3_LIBDIR) -L$(MATH_NVIDIA_LIBDIR) -lcudart -lcurand -cuda # -lacccuda

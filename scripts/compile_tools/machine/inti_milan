@@ -1,0 +1,31 @@
+#
+# Machine file for Irene Joliot-Curie Milan partition
+# __________________________________________________________
+#
+# Load the correct modules:
+#
+# 
+# module purge
+# 
+# module load python3
+# module load flavor/buildcompiler/gcc/12 gnu/12 mpi/openmpi/4.1.7.2
+# module load flavor/hdf5/parallel hdf5/1.14.3
+# 
+# export OMPI_MCA_btl_portals4_use_rdma=0
+# 
+# export SMILEICXX=mpic++
+# export PYTHONEXE=python3
+# export PYTHONHOME=$PYTHON3_ROOT
+# 
+# export PATH=$PYTHONHOME/bin:$PATH
+# export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
+# 
+# make clean
+# 
+# make -j 8 machine="inti_milan" config="no_mpi_tm"
+
+CXXFLAGS += -O3 -march=native -mtune=znver3 -ffast-math -funroll-loops
+CXXFLAGS += -finline-functions --param inline-unit-growth=300 -fno-strict-aliasing
+#LDFLAGS  += -flto
+#CXXFLAGS += -flto
+

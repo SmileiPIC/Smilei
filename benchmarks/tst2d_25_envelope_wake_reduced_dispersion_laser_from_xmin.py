@@ -3,7 +3,7 @@ dx = 1.
 dtrans = 3.
 dt = 0.8*dx
 nx = 192
-ntrans = 64 
+ntrans = 32 
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 32
@@ -18,16 +18,17 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = 350.*dt,
+    simulation_time = 1501.*dt,
 
     cell_length  = [dx, dtrans],
     grid_length = [ Lx,  Ltrans],
 
-    number_of_patches =[npatch_x, 8],
+    number_of_patches =[npatch_x, 4],
     
     cluster_width = nx/npatch_x,
 
-    EM_boundary_conditions = [ ["silver-muller"] ],
+    EM_boundary_conditions = [ ["silver-muller","silver-muller"],["PML","PML"] ],
+    number_of_pml_cells = [[0,0],[15,15]],
     
 
     solve_poisson = False,
@@ -76,9 +77,7 @@ LaserEnvelopeGaussian2D(
     waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit_reduced_dispersion',
-    Envelope_boundary_conditions = [ ["reflective", "reflective"],
-        ["reflective", "reflective"], ],
-    
+    Envelope_boundary_conditions = [ ["reflective", "reflective"], ["PML", "PML"], ],
 )
 
 Checkpoints(

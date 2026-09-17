@@ -31,29 +31,221 @@ Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
-As of December 2025, at least 289 papers have been published covering a broad range of topics:
+As of June 2026, at least 321 papers have been published covering a broad range of topics:
 
-* laser-plasma interaction (LPI) / inertial fusion (FCI)
+* laser-plasma interaction (LPI), including inertial fusion (FCI)
 * ultra-high intensity (UHI) applications
 * quantum electrodynamics (QED) processes in plasmas
 * astrophysical and space plasmas
-* high-performance computing (HPC)
+* computer science, including high-performance computing (HPC)
 
-Following is the distribution of these topics in the listed publications up to November 2021:
+Following is the distribution of these topics in the listed publications up to December 2025:
 
 .. _fig_paper_topics:
 
-.. figure:: /_static/figures/paper_topics.png
-  :width: 50%
+.. figure:: /_static/figures/publications_per_application.png
+  :width: 100%
 
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here
-   You can count the number of papers in the list with the vim command :%s/.. \[//gn. 
+   You can count the number of papers in the list with the vim command :%s/.. \[//gn.
+
+.. [Laishram2026]
+
+    M. Laishram, S. Basnet, and Y. D. Yoon,
+    `Kineclinic magnetogenesis in relativistic collisionless plasmas`,
+    `Physical Review Research 8, 023210 (2026) <https://doi.org/10.1103/m1yq-q8xw>`_
+
+.. [Hong2026]
+
+    W. Hong, P. He, T.-J. Zhang, S.-Y. Li, and P. Wang,
+    `High-sensitivity Methodologies to Detect Radio-band Gravitational Waves`,
+    `The Astrophysical Journal Supplement Series 284, 51 (2026) <https://doi.org/10.3847/1538-4365/ae593d>`_
+
+.. [Su2026]
+
+    W.‑Q. Su, C.‑W. Ma, X.‑G. Cao, G.‑Q. Zhang, and Y.‑T. Wang,
+    `GeV‑level γ‑ray and positron beams produced by collisions of multi‑PW laser on high‑energy electron beam`,
+    `Nuclear Science and Techniques 37, 157 (2026) <https://doi.org/10.1007/s41365-026-01994-3>`_
+       
+.. [Kane2026]
+
+    G. Kane, P. Drobniak, A. Beck, S. Kazamias, V. Kubytskyi, M. Lenivenko, B. Lucas, F. Massimo, J. Serhal, A. Specka, and K. Cassou
+    `Surrogate models study for laser-plasma accelerator electron source design through numerical optimisation`,
+    `Machine Learning: Science and Technology 7, 3, 030502 (2026) <https://doi.org/10.1088/2632-2153/ae6603>`_
+
+.. [Massimo2026]
+
+    F. Massimo, I. Moulanier, A. Guerente, O. Khomyshyn, M. Masckala, T. L. Steyn, U. Schramm, A. Irman, and B. Cros
+    `Laser field reconstruction for the modeling of laser-plasma interaction in cylindrical geometry`,
+    `Physical Review E 113, 055211 (2026) <https://doi.org/10.1103/m1lt-wz5h>`_
+
+.. [Polanco-Rodríguez2026]
+
+    F. J. Polanco-Rodríguez, C. Krafft, and P. Savoini,
+    `Evidence of Langmuir/Z-mode Wave Decay into Z-mode Electromagnetic Radiation in the Solar Wind`,
+    `The Astrophysical Journal 1002, L35 (2026) <https://doi.org/10.3847/1538-4357/ae3723>`_
+
+.. [Demidov2026]
+
+    I. Demidov, Y. Lyubarsky, and U. Keshet,
+    `Cavitation instability in unmagnetized relativistic pair shocks`,
+    `Physical Review D 113, 023006 (2026) <https://doi.org/10.3847/2041-8213/ae626f>`_
+
+.. [Majorosia2026]
+
+    S. Majorosia, N. A. M. Hafz, and Z. Lécz,
+    `High-order exponential solver method for particle-in-cell simulations`,
+    `Computer Physics Communications 322, 110054 (2026) <https://doi.org/10.1016/j.cpc.2026.110054>`_
+       
+.. [Cai2026]
+
+    W. Cai, L. Zhang, X. Geng, Y. Hu, X. Zhang, and L. Ji ,
+    `Laser-driven x-ray radiation from nanoarray–gas hybrid plasma target`,
+    `Physics of Plasmas 33, 053101 (2026) <https://doi.org/10.1063/5.0316728>`_
+       
+.. [Xu2026b]
+
+    L. Xu, G. Liao, T. Xi, X. Lu, X. Zhang, J. Ruan, and Y. Li,
+    `Anomalous spectral redshift of intense terahertz pulses propagating in weakly ionized gases`,
+    `Physics of Plasmas 33, 053302 (2026) <https://doi.org/10.1063/5.0310252>`_
+       
+.. [Maslarova2026]
+
+    D. Maslarova, A. Hansson, M. Luo, V. Horný, J. Ferri, I. Pusztai, and T. Fülöp,
+    `Batch Bayesian optimization of attosecond betatron pulses from laser wakefield acceleration`,
+    `Communications Physics 9, 92 (2026) <https://doi.org/10.1038/s42005-026-02542-6>`_
+
+.. [Timmis2026]
+
+    R. J. L. Timmis, C. R. J. Fitzpatrick, J. P. Kennedy, H. M. Huddleston, E. Denis, A. James, C. Baird, D. Symes, D. McGonegle, E. Atonga, H. Martin, J. Rebenstock, J. Neely, J. Lee, J. Redfern, N. Bourgeois, O. Finlay, R. Ruskov, S. Astbury, S. Hawkes, Z. Zhang, M. Zepf, K. Krushelnick, E. Gumbrell, P. P. Rajeev, M. Yeung, B. Dromey, and P. Norreys,
+    `Efficiency-optimized relativistic plasma harmonics for extreme fields`,
+    `Nature (2026)  <https://doi.org/10.1038/s41586-026-10400-2>`_
+
+.. [Jirka2026]
+
+    M. Jirka, J. Vabek, and S. V. Bulanov
+    `QED cascade in multiple radially polarized laser pulse collision`,
+    `Plasma Physics and Controlled Fusion (2026) <https://doi.org/10.1088/1361-6587/ae60a3>`_
+
+.. [Xu2026a]
+
+    L. Xu, G. Liao, X. Zhang, J. Ruan, T. Xi, X. Lu, and Y. Li,
+    `Anomalous collisionally induced transparency`,
+    `Physical Review E 113, 045213 (2026) <https://doi.org/10.1103/strm-xs84>`_
+
+.. [Gagarin2026]
+
+    Iu. Gagarin, and Ph. Korneev,
+    `Laser-driven autoresonant acceleration of thermal electrons in plasma solenoid`,
+    `Physical Review E 113, 045204 (2026) <https://doi.org/10.1103/pxvc-2dgb>`_
+
+.. [Wen2026]
+
+    C. H. Wen, H. Peng, T. W. Huang, and C. T. Zhou ,
+    `Far-field radiation from laser-driven plasmas and electron beams: a time-domain approach`,
+    `The European Physical Journal D 80, 32 (2026) <https://doi.org/10.1140/epjd/s10053-026-01142-x>`_
+
+.. [Jikei2026]
+
+    T. Jikei, D. Grošelj, and L. Sironi,
+    `Magnetic Field Amplification and Particle Acceleration in Weakly Magnetized Transrelativistic Electron–Ion Shocks`,
+    `The Astrophysical Journal 998, 149 (2026) <https://doi.org/10.3847/1538-4357/ae3723>`_
+
+.. [Luo2026]
+
+    M. Luo, C. Riconda, A. Grassi, N. Wang, J. S. Wurtele, I. Pusztai, and T. Fülöp,
+    `Long-lasting plasma density structures utilizing tailored density profiles`,
+    `Matter and Radiation at Extremes 10, 057204 (2025) <https://doi.org/10.1063/5.0312402>`_
+
+.. [Maffini2026]
+
+    A. Maffini, K. Ambrogioni, D. Dellasega, M. Galbiati, M. S. G. de Magistris, F. Gatti, M. Iaccarino, C. Mallimaci, F. Mirani, Davide Orecchia, V. Russo, D. Vavassori, and M. Passoni
+    `Nanofoam in action: a versatile tool for laser-plasma interaction experiments`,
+    `Plasma Physics and Controlled Fusion 68, 3 (2026) <https://doi.org/10.1088/1361-6587/ae44c8>`_
+
+.. [Charbonnet2026]
+
+    K. J. Charbonnet, E. C. Nelson, and C. P. J. Barty,
+    `Structured light for laser-plasma ion lensing`,
+    `Physics of Plasmas 33, 033106 (2026) <https://doi.org/10.1063/5.0313041>`_
+
+.. [Dong2026]
+
+    Q. Dong, C.-Z. Li, C. Xie, Z.-D. Chen, D.-B. Zou, W. Luo, and T.-P. Yu,
+    `Alternative pairwise nuclear fusion optimization algorithm in arbitrarily weighted particle-in-cell simulations`,
+    `Nuclear Science and Techniques 37, 103, (2026) <https://doi.org/10.1007/s41365-026-01952-z>`_
+
+.. [Drobniak2026]
+
+    P. Drobniak, J. Serhal, M. P. Anania, E. Baynard, A. Beck, C. Bruni, A. Cauchois, G. Costa, L. Crincoli, D. Douillet, J. Gautier, J.-P. Goddet, C. Guyot, G. Iaquaniello, G. Kane, S. Kazamias, O. Kononenko, V. Kubytskyi, B. Lucas, A. Mahjoub, A. Maitrallain, O. Neveu, Y. Peinaud, M. Pittman, P. Rousseau, J. S. Ramírez Amado, A. Specka, C. Thaury, and K. Cassou,
+    `Validation of a Compact and Tunable Continuous Gas-Flow Laser-Plasma Target for Electron Beam Production Above 150 MeV`,
+    `Applied Sciences 6 (5), 2312 (2026) <https://doi.org/10.3390/app16052312>`_ 
+
+.. [Lytova2026]
+
+    M. Lytova, F. Fillion-Gourdeau, S. Vallières, S. Fourmaux, S. Payeur, F. Légaré, and S. MacLean,
+    `Generation of directed electron beams by tight focusing of an ultrashort IR laser in a near-critical plasma`,
+    `Physics of Plasmas 33, 013103 (2026) <https://doi.org/10.1063/5.0304934>`_
+
+.. [Xiao2026]
+
+    P. Xiao, A. Mousavi, Z. Wu, K. Liu and Y. Wu,
+    `Simulation of Energy Transfer From Magnetosonic Waves to High-Frequency EMIC Waves via Low-Energy Protons`,
+    `Journal of Geophysical Research: Space Physics, 131, e2025JA034614 (2026) <https://doi.org/10.1029/2025JA034614>`_
+
+.. [Yang2026]
+
+    Y. Yang, S. Lu, Q. Lu, A. Guo and W. Li,
+    `Electron Energization in the Evolution of the Kelvin–Helmholtz Instability`,
+    `The Astrophysical Journal 997, 71 (2026) <https://doi.org/10.3847/1538-4357/ae2b70>`_
+
+.. [Francois2026]
+
+    M. François, M. E. Dieckmann, X. Ribeyre and E. d'Humières,
+    `The structure of shocks and contact discontinuities in unmagnetized plasma as a function of the electron-to-proton temperature ratio`,
+    `Physics of Plasmas 33, 012105 (2026) <https://doi.org/10.1063/5.0293079>`_
+
+.. [Andronic2026]
+
+    M. Andronic, M. Parvu and V. Horný,
+    `Optimising secondary particles and radiation sources from a highly efficient laser wakefield accelerator`,
+    `Plasma Physics and Controlled Fusion 68, 1 (2026) <https://doi.org/10.1088/1361-6587/ae3342>`_
+
+.. [Bukharskii2025c]
+
+    N. D. Bukharskii and P. A. Korneev,
+    `Efficient Guiding of Laser-Driven Proton Beam with Azimuthal Magnetic Fields Induced by Relativistic Discharge Pulse in Micro-Wire`,
+    `Plasma Physics Reports 51, 941–952  (2025) <https://doi.org/10.1134/S1063780X2560330X>`_
+
+.. [Bukharskii2025b]
+
+    N. D. Bukharskii and P. A. Korneev,
+    `Conversion of Intense Laser Pulses to Electromagnetic Fields of Terahertz and Sub-Terahertz Ranges Using Extended Targets`,
+    `Radiophysics and Quantum Electronics 68, 218–230 (2025) <https://doi.org/10.1007/s11141-026-10453-3>`_
+
+.. [Dmitriev2025]
+
+    E. O. Dmitriev and P. A. Korneev,
+    `Transfer of Angular Orbital Momentum of a Structured Laser Pulse to an Ensemble of Charged Particles`,
+    `Radiophysics and Quantum Electronics 67, 799–813 (2025) <https://doi.org/10.1007/s11141-025-10419-x>`_
+
+.. [Spadova2025]
+
+    A. Špádová, P. Valenta, S. Lorenz, M. Nevrkla, J. Nejdl, G. M. Grittani and S. V. Bulanov,
+    `Toward controlling electron beam charge with nanoparticle-assisted laser wakefield accelerators`,
+    `Physics of Plasmas 32, 123104 (2025) <https://doi.org/10.1063/5.0295050>`_
+
+.. [Wang2025b]
+
+    P. Wang, J. Xu, G. Zhang, X. Deng, Y. Wang, Z. Ma, C. Fu, L. Fan, Q. Wang, T. Xu, L. Ji, R. Xu, J. Li, X. Lu, B. Shen, Y. Liu, W. Yin, X. Geng, H. Zhang, Y. Leng, R. Li and Y.-G. Ma,
+    `Proton–boron fusion in femtosecond-laser-irradiated nanowire array target`,
+    `Physics of Plasmas 32, 102702 (2025) <https://doi.org/10.1063/5.0284502>`_
 
 .. [Horny2025b]
 
-    V. Horný, V. and D. Doria,
+    V. Horný, and D. Doria,
     `Multi-PW laser–driven proton acceleration using a plasma-lens target`,
     `Scientific Reports (2025) <https://doi.org/10.1038/s41598-025-29793-7>`_
 
@@ -62,7 +254,7 @@ Following is the distribution of these topics in the listed publications up to N
     C. Caizergues, E. d'Humières, D. Raffestin, M. Tosca, L. Giuffrida, A. Morace, D. Batani and Ph. D. Nicolaï,
     `Enhanced proton–boron fusion yield with advanced target geometries under direct laser illumination`,
     `Physics of Plasmas 32, 123101 (2025) <https://doi.org/10.1063/5.0292198>`_
-       
+
 .. [Nelson2025]
 
     Eric C. Nelson, K. J. Charbonnet, T. Reutershan, H. H. Effarah and C. P. J. Barty,
@@ -74,25 +266,25 @@ Following is the distribution of these topics in the listed publications up to N
     R. Ul Haq, M. Rezaei-Pandari, X. Xie, X. Liang, M. Sun, P. Zhu, Z. Lu, G. Zhang, L. Li, H. Xue, N. A. M. Hafz and J. Zhu,
     `Multi-GeV electron beam generation via two-stage laser wakefield acceleration`,
     `Scientific Reports volume 15, 42290 (2025) <https://doi.org/10.1038/s41598-025-22766-w>`_
-       
+
 .. [Azizian2025]
 
     F. Azizian,  A. Hasanbeigi, M. J. Jafari and S. Rezaei,
     `Pre-plasma shaping via picosecond laser contrast: A hybrid simulation study of proton acceleration in TNSA`,
     `Physics of Plasmas 32, 113104 (2025) <https://doi.org/10.1063/5.0294627>`_
 
-.. [Shou2025]
+.. [Shou2025b]
 
     Y.Shou, Z. Gong, K. H. Pae, J. W. Yoon, J. H. Sung, S. K. Lee, S. Y. Kim, S. H. Kim, X. Wu, X. Yan, I. W. Choi and C. H. Nam,
     `Proton Acceleration Associated with Sheet Crossing in Petawatt-Laser-Irradiated Nanometer Foils`,
     `Physical Review Letters 135, 215002 (2025) <https://doi.org/10.1103/8lmb-x3ss>`_
-       
+
 .. [Lecz2025]
 
     Z. Lécz, S. Majorosi and N. A. M. Hafz,
     `Single-mode laser guiding in non-parabolic plasma channels for high-energy electron acceleration`,
     `Plasma Physics and Controlled Fusion 67, 115015 (2025) <https://doi.org/10.1088/1361-6587/ae1706>`_
-       
+
 .. [Guerroudj2025]
 
     D. Guerroudj, A. Debayle, A. Calisti, P.-E. Masson-Laborde, J. Rosato and S. Ferri,
@@ -109,13 +301,13 @@ Following is the distribution of these topics in the listed publications up to N
     H. Yu,  J. Fang,
     `Particle Acceleration along Magnetic Fields as the Origin of Ear-like Structures in Supernova Remnants`,
     `Monthly Notices of the Royal Astronomical Society staf1654 (2025) <https://doi.org/10.1093/mnras/staf1654>`_
-     
+
 .. [Wang2025]
 
     P. Wang, J. Xu, G. Zhang, X. Deng, Y. Wang, Z. Ma, C. Fu, L. Fan, Q. Wang, T. Xu, L. Ji, R. Xu, J. Li, X. Lu, B. Shen, Y. Liu, W. Yin, X. Geng, H. Zhang, Y. Leng, R. Li and Y.-G. Ma,
     `Proton–boron fusion in femtosecond-laser-irradiated nanowire array target`,
     `Physics of Plasmas 32, 102702 (2025) <https://doi.org/10.1063/5.0284502>`_
-       
+
 .. [Korneev2025]
 
     Ph. Korneev, N. D. Bukharskii, I. V. Kochetkov, M. Ehret, Y. Abe, K. F. F. Law, S. Fujioka, G. Schaumann and B. Zielbauer,
@@ -127,31 +319,31 @@ Following is the distribution of these topics in the listed publications up to N
     C. Aparajit, A. Choudhary, A. Dulat, M. Grech, S. Marini, A. D. Lad, Y. M. Ved, M. Raynaud, C. Riconda and G. Ravindra Kumar,
     `Role of femtosecond prestructure of intense harmonic pulses in relativistic laser-solid interactions`,
     `Physical Review Letters 7, L032063 (2025) <https://doi.org/10.1103/PhysRevResearch.7.L032063>`_
-       
+
 .. [Mironov2025]
 
     A. A. Mironov, S. S. Bulanov, A. Di Piazza, M. Grech, L. Lancia, S. Meuren, J. Palastro, C. Riconda, H. G. Rinderknecht, P. Tzeferacos and G. Gregori,
     `Testing strong-field QED with the avalanche precursor`,
     `Physics of Plasmas 32, 093302 (2025) <https://doi.org/10.1063/5.0283438>`_
-       
+
 .. [Marques2025]
 
     J.-R. Marquès, F. Pérez, P. Loiseau, L. Lancia, C. Briand, S. Depierreux, M. Grech and C. Riconda,
     `Experimental Evidence of Stimulated Raman Rescattering in Laser-Plasma Interaction`,
     `Physical Review Letters 135, 105101 (2025) <https://doi.org/10.1103/r7th-rq38>`_
-       
+
 .. [Capdessus2025]
 
     R. Capdessus, C. Ruyer, A. Debayle, P. Loiseau and P. E. Masson-Laborde,
     `Influence of Collisional Effects on Ion-Acoustic Wave Properties in Non-Maxwellian Laser-Driven Plasmas`,
-    `Physical Review Letters 135, 125101 (2025) <https://doi.org/10.1103/yycm-f8l7>`_   
+    `Physical Review Letters 135, 125101 (2025) <https://doi.org/10.1103/yycm-f8l7>`_
 
 .. [Gebhard2025]
 
     J. Gebhard, P. Hilz, F. Balling, J. Kalis, M. Speicher, L. Doyle, A. Sävert, G. Schäfer, P. Khademi, B. Liu, M. Zepf and J. Schreiber,
     `Efficient laser-plasma acceleration of protons via near-critical mass limited targets`,
     `Physical Review E 112, 035204 (2025) <https://doi.org/10.1103/z7y1-1zbz>`_
-       
+
 .. [Rakeeb2025]
 
     S. Rakeeb, S. Dam, A. Parab, A. D. Lad, Y. M. Ved and G. R. Kumar,
@@ -175,13 +367,13 @@ Following is the distribution of these topics in the listed publications up to N
     P. Martin, M. Borghesi and S. Kar,
     `Characteristics of neutron beams from deuterated targets irradiated by intense sub-ps lasers`,
     `Physical Review Research 7, 033178 (2025) <https://doi.org/10.1063/5.0240578>`_
-    
+
 .. [Corobean2025a]
 
     B. Corobean, V. Horný, A. Pukhov, E. d’Humières, D. Doria, C. A. Ur, P. Tomassini,
     `Laser–plasma acceleration of quasi-monoenergetic carbon ion beams with the “peeler” scheme`,
     `Matter and Radiation at Extremes 10, 057204 (2025) <https://doi.org/10.1063/5.0273104>`_
-       
+
 .. [Krafft2025]
 
     C. Krafft, A. S. Volokitin, F. J. Polanco-Rodríguez and P. Savoini,
@@ -208,7 +400,7 @@ Following is the distribution of these topics in the listed publications up to N
 
 .. [Annenkov2025]
 
-    V. Annenkov, C. Krafft, A. Volokitin and P. Savoini, 
+    V. Annenkov, C. Krafft, A. Volokitin and P. Savoini,
     `Statistical properties of beam-driven upper-hybrid wave turbulence in the solar wind`,
     `Astronomy and Astrophysics 699, L6 (2025) <https://doi.org/10.1051/0004-6361/202555087>`_
 
@@ -240,7 +432,7 @@ Following is the distribution of these topics in the listed publications up to N
 
     M. Baraka, O. Le Contel, P. Canu, S. W. Alqeeq, J. Dargent, A. Beck, G. Cozzani, A. Retinò, T. Chust, L. Mirioni, S. Toledo-Redondo, M. Akhavan-Tafti, R. Bandyopadhyay, A. Chasapis, C. Norgren, Y. Khotyaintsev, N. Ahmadi, H. Y. Wei, D. Fischer, D. J. Gershman, J. L. Burch, R. B. Torbert, B. L. Giles, S. A. Fuselier, R. E. Ergun, P.-A. Lindqvist, C. T. Russell, R. J. Strangeway and K. R. Bromund,
     `MMS Analysis of a Dayside Compressed Magnetospheric Separatrix in the Presence of Cold Ions and a Moderate Guide Field`,
-    `Journal of Geophysical Research: Space Physics, 130, 4 (2025) <https://doi.org/10.1029/2024JA033234>`_
+    `Journal of Geophysical Research: Space Physics, 130, e2024JA033234 (2025) <https://doi.org/10.1029/2024JA033234>`_
 
 .. [Ye2025]
 
@@ -284,9 +476,9 @@ Following is the distribution of these topics in the listed publications up to N
     `Effect of Background Magnetic Field on Ion Weibel Instability With High-Intensity Short-Pulse Lasers`,
     `Contributions to Plasma Physics 0:e70017 (2025) <https://doi.org/10.1002/ctpp.70017>`_
 
-.. [Wang2025]
+.. [Wang2025a]
 
-    P.-T. Wang, X.-S. Geng, G.-Q. Zhang, L.-L. Ji and Y.-G. Ma ,
+    P.-T. Wang, X.-S. Geng, G.-Q. Zhang, L.-L. Ji and Y.-G. Ma,
     `Laser-driven micro-pinch: a pathway to ultra-intense neutrons`,
     `Nuclear Science and Techniques 36, 108, (2025) <https://link.springer.com/article/10.1007/s41365-025-01738-9>`_
 
@@ -301,7 +493,6 @@ Following is the distribution of these topics in the listed publications up to N
     T. V. Liseykina, E. E. Peganov and S. V. Popruzhenko
     `Probing the radiation-dominated regime of laser-plasma interaction in multibeam configurations of petawatt lasers`,
     `Physical Review E 111, 045212 (2025) <https://doi.org/10.1103/PhysRevE.111.045212>`_
-       
 
 .. [Takizawa2025]
 
@@ -375,7 +566,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Generating high-current quasi-monoenergetic MeV ions via laser-driven TNSA-based dechirp`,
     `Physics of Plasmas 32, 033104 (2025) <https://doi.org/10.1063/5.0241345>`_
 
-.. [Bukharskii2025]
+.. [Bukharskii2025a]
 
     N. Bukharskii and Ph. Korneev,
     `Formation of propagating current pulses on extended surfaces under grazing irradiation with relativistically intense ultrashort laser pulses`,
@@ -417,7 +608,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Acceleration and focusing of multispecies ion beam using a converging laser-driven shock`,
     `Physical Review E 111, 025203 (2025) <https://doi.org/10.1103/PhysRevE.111.025203>`_
 
-.. [Shou2025]
+.. [Shou2025a]
 
     Y. Shou, X. Wu, K. H. Pae, G.-E. Ahn, S. Y. Kim, S. H. Kim, J. W. Yoon, J. H. Sung, S. K. Lee, Z. Gong, X. Yan, I. W. Choi and C. H. Nam, 
     `Laser-driven proton acceleration beyond 100 MeV by radiation pressure and Coulomb repulsion in a conduction-restricted plasma`,
@@ -539,7 +730,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Laser polarization control of ionization-injected electron beams and x-ray radiation in laser wakefield accelerators`,
     `Plasma Physics and Controlled Fusion 66, 085001 (2024) <http://dx.doi.org/10.1088/1361-6587/ad5379>`_
 
-.. [Yao2024]
+.. [Yao2024b]
 
     W. Yao, R. Lelièvre, T. Waltenspiel, I. Cohen, A. Allaoua, P. Antici, A. Beck, E. Cohen, X. Davoine, E. d’Humières, Q. Ducasse, E. Filippov, C. Gautier, L. Gremillet, P. Koseoglou, D. Michaeli, D. Papadopoulos, S. Pikuz, I. Pomerantz, F. Trompier, Y. Yuan, F. Mathieu and Julien Fuchs,
     `Enhanced Energy, Conversion Efficiency and Collimation of Protons Driven by High-Contrast and Ultrashort Laser Pulses`,
@@ -551,7 +742,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Angular momentum gain by electrons under the action of intense structured light`,
     `Physical Review A 110, 013514 (2024) <http://dx.doi.org/10.1103/PhysRevA.110.013514>`_
 
-.. [Yu2024]
+.. [Yu2024b]
 
     H. Yu, Q. Xia and Jun Fang,
     `Nonthermal Acceleration of Electrons, Positrons, and Protons at a Nonrelativistic Quasi-parallel Collisionless Shock`,
@@ -695,7 +886,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Electron acceleration and x-ray generation from near-critical-density carbon nanotube foams driven by moderately relativistic lasers`,
     `Physics of Plasmas 31, 043108 (2024) <https://doi.org/10.1063/5.0202843>`_
 
-.. [Yao2024]
+.. [Yao2024a]
 
     W. Yao, M. Nakatsutsumi, S. Buffechoux, P. Antici, M. Borghesi, A. Ciardi, S. N. Chen, E. d’Humières, L. Gremillet, R. Heathcote, V. Horný, P. McKenna, M. N. Quinn, L. Romagnani, R. Royle,  G. Sarri, Y. Sentoku, H.-P. Schlenvoigt, T. Toncian, O. Tresca, L. Vassura, O. Willi, J. Fuchs,
     `Optimizing laser coupling, matter heating, and particle acceleration from solids using multiplexed ultraintense lasers`,
@@ -713,7 +904,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Electrostatic Wave Decay in the Randomly Inhomogeneous Solar Wind`,
     `The Astrophysical Journal Letters, 964, L30 (2024) <https://doi.org/10.3847/2041-8213/ad3449>`_
 
-.. [Yu2024]
+.. [Yu2024a]
 
      J. Yu, J. Zhong, Y. Ping, and W. An, 
      `Numerical study of the suppression of magnetic reconnection onset with injected plasma`,
@@ -1067,7 +1258,7 @@ Following is the distribution of these topics in the listed publications up to N
     `Generation of polarized proton beams with gaseous targets from CO2-laser-driven collisionless shock acceleration`,
     `Physics of Plasmas 29, 053101 (2022) <https://doi.org/10.1063/5.0084870>`_
 
-.. [Chen2022]
+.. [Chen2022b]
 
     Q. Chen, D. Maslarova, J. Wang, S. X. Lee, V. Horný and D. Umstadter,
     `Transient Relativistic Plasma Grating to Tailor High-Power Laser Fields, Wakefield Plasma Waves, and Electron Injection`,
@@ -1097,7 +1288,7 @@ Following is the distribution of these topics in the listed publications up to N
      `Cross-beam energy transfer between spatially smoothed laser beams`,
      `Physics of Plasmas 29, 112112 (2022) <https://doi.org/10.1063/5.0109511>`_
           
-.. [Chen2022]
+.. [Chen2022a]
 
      Q. Chen, D. Maslarova, J. Wang, S. Li, and D. Umstadter,
      `Injection of electron beams into two laser wakefields and generation of electron rings`,
@@ -1629,7 +1820,7 @@ Following is the distribution of these topics in the listed publications up to N
 
   J. Dargent, N. Aunai, B. Lavraud, S. Toledo-Redondo and F. Califano,
   `Signatures of Cold Ions in a Kinetic Simulation of the Reconnecting Magnetopause`,
-  `Journal of Geophysical Research: Space Physics, 124, 2497 (2019) <https://doi.org/10.1029/2018JA026343>`_
+  `Journal of Geophysical Research: Space Physics, 124, 2497–2514 (2019) <https://doi.org/10.1029/2018JA026343>`_
 
 .. [Dargent2019a]
 

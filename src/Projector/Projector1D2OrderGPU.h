@@ -50,6 +50,8 @@ public:
 protected:
     double dts2_;
     double dts4_;
+    int    not_spectral_;
+    unsigned int oversize_ ;
     bool cell_sorting_;
     unsigned int x_dimension_bin_count_;
 };

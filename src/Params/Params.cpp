@@ -527,6 +527,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             if( number_of_pml_cells[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
                 number_of_pml_cells[iDim].push_back( number_of_pml_cells[iDim][0] );
             }
+            // Set number of pml cells to zero if PML are not used
+            for (unsigned int side =0; side<2; side++){
+                if (EM_BCs[iDim][side] != "PML"){
+                    WARNING( "Number of PML cells set to zero along dimension " << iDim );
+                    number_of_pml_cells[iDim][side] = 0;
+                }
+            }
         }
     }
 
@@ -1901,7 +1908,8 @@ int Params::getGPUClusterWidth() const
 int Params::getGPUClusterGhostCellBorderWidth() const
 {
     //It is assumed all oversize are equal
-    return 2*oversize[0]+1;
+    //return 2*oversize[0]+1;
+    return getGPUClusterGhostCellBorderWidth( interpolation_order );
 }
 
 int Params::getGPUClusterCellVolume() const

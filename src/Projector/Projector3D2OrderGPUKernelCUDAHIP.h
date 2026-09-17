@@ -50,6 +50,7 @@ void currentDepositionKernel3D( double *__restrict__ host_Jx,
                                int    nprimy,
                                int    nprimz,
                                int    not_spectral,
+                               unsigned int oversize_,
                                bool   cell_sorting = false );
 
 //static inline
@@ -82,6 +83,7 @@ void densityDepositionKernel3D(
                                 int    nprimy,
                                 int    nprimz,
                                 int    not_spectral,
+                                unsigned int oversize_,
                                 bool   cell_sorting = false );
 
 } // namespace cudahip

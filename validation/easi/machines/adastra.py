@@ -8,7 +8,7 @@ class MachineAdastra(Machine):
 
     # If you are editing this file, be carful with the python format brackets '{' '}'.
     # You may need to escape some.
-    the_slurm_script = """#!/bin/bash
+    the_slurm_script = r"""#!/bin/bash
 #SBATCH --job-name=smilei_validation
 #SBATCH --account={the_account}
 #SBATCH --constraint={the_partition}&turbo

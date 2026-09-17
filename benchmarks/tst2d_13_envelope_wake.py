@@ -18,22 +18,22 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = 350.*dt,
+    simulation_time = 1501.*dt,
 
     cell_length  = [dx, dtrans],
     grid_length = [ Lx,  Ltrans],
 
     number_of_patches =[npatch_x, 8],
-    
-    cluster_width = nx/npatch_x,
 
-    EM_boundary_conditions = [ ["silver-muller"] ],
+    EM_boundary_conditions = [ ["silver-muller","silver-muller"],["PML","PML"] ],
+    number_of_pml_cells = [[0,0],[10,10]],
     
 
     solve_poisson = False,
     print_every = 100,
 
     use_BTIS3_interpolation = True,
+    maxwell_solver = "Terzani",
 
 )
 
@@ -54,7 +54,6 @@ Species(
     position_initialization = "regular",
     momentum_initialization = "cold",
     particles_per_cell = 1,
-    c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
     charge_density = polygonal(xpoints=[center_laser+2.*laser_fwhm,center_laser+2.1*laser_fwhm,15000,20000],xvalues=[0.,0.0045,0.0045,0.]),
@@ -75,8 +74,7 @@ LaserEnvelopeGaussian2D( # linear regime of LWFA
     waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
-    Envelope_boundary_conditions = [ ["reflective", "reflective"],
-        ["reflective", "reflective"], ],
+    Envelope_boundary_conditions = [ ["reflective", "reflective"],["PML","PML"]],
 )
 
 

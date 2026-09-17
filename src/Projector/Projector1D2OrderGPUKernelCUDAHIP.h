@@ -37,6 +37,8 @@ void currentDepositionKernel1D( double *__restrict__ host_Jx,
                                double dx_inv,
                                double dx_ov_dt,
                                int    i_domain_begin,
+                               int    not_spectral_,
+                               unsigned int oversize_,
                                bool   cell_sorting );
 
 void currentAndDensityDepositionKernel1D(
@@ -62,10 +64,11 @@ void currentAndDensityDepositionKernel1D(
                                 double dx_inv,
                                 double dx_ov_dt,
                                 int    i_domain_begin,
+                                int    not_spectral_,
+                                unsigned int oversize_,
                                 bool   cell_sorting );
 
 } // namespace cudahip1d
 
 #endif
 #endif
-

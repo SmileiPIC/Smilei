@@ -10,7 +10,7 @@ SMILEICXX_DEPS = g++
 #GPU_COMPILER = nvcc
 
 CXXFLAGS += -w
-CXXFLAGS += -tp=zen3 -gpu=cc80 -std=c++14
+CXXFLAGS += -tp=zen3 -acc=gpu -gpu=cc80 -std=c++14
 CXXFLAGS += -Minfo=accel # what is offloaded/copied
 # CXXFLAGS += -Minfo=all   # very verbose output
 CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1 

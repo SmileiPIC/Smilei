@@ -1,0 +1,46 @@
+#
+# Machine file for Inti GH200 partition 
+# __________________________________________________________
+#
+# Documentation:
+# https://www-hpc.cea.fr/tgcc-public/en/html/tgcc-public.htm
+#
+# module load python3
+# module load nvhpc/25.7 mpi/openmpi/5
+# module load flavor/hdf5/parallel hdf5/1.14.6
+#
+#module purge
+#
+#module load python3
+#module load nvhpc/25.7 mpi/openmpi/5
+#module load flavor/hdf5/parallel hdf5/1.14.6
+#
+#$MATH_NVIDIA_INCDIR
+#
+#export SMILEICXX=mpic++
+#export PYTHONEXE=python3
+#export PYTHONHOME=$PYTHON3_ROOT
+#
+#make clean
+#
+#make -j 8 machine="inti_gh200" config="gpu_nvidia"
+#
+
+
+
+SMILEICXX_DEPS = nvc++ -I$(MPI_ROOT)/include -I$(HDF5_INCDIR)
+GPU_COMPILER = nvcc -I$(MPI_ROOT)/include -I$(HDF5_INCDIR)
+
+CXXFLAGS += -w
+CXXFLAGS += -O3 -tp=native -acc=gpu -gpu=sm_90,lineinfo,fastmath,flushz -std=c++17 -L$(MATH_NVIDIA_LIBDIR) -lcurand -cudalib
+CXXFLAGS += -Minfo=accel # what is offloaded/copied
+CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
+CXXFLAGS += -I$(MATH_NVIDIA_INCDIR)
+CXXFLAGS += -I/ccc/products/nvhpc-25.11/system/default/Linux_aarch64/25.11/cuda/13.0/include/cccl/
+
+#GPU_COMPILER_FLAGS += -O3 --std c++14 -arch=sm_90a --use_fast_math
+GPU_COMPILER_FLAGS += -O3 --std c++17 -gencode arch=compute_90a,code=sm_90a --ftz=true --prec-div=false --fmad=true --use_fast_math --extended-lambda
+GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
+GPU_COMPILER_FLAGS += -lineinfo # -Xptxas=-v
+
+LDFLAGS += -acc=gpu -O3 -gpu=sm_90 -std=c++17 -cudalib=curand -L$(PYTHON3_LIBDIR) -L$(MATH_NVIDIA_LIBDIR) -lcudart -lcurand -cuda # -lacccuda

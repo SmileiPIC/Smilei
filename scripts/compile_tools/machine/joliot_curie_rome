@@ -4,15 +4,11 @@
 #
 # Load the correct modules:
 #
-#module load mpi
-#module load hdf5
-#module switch flavor/hdf5/serial flavor/hdf5/parallel
+#module load flavor/hdf5/parallel inteloneapi/24 mpi/openmpi/5 hdf5/1.14.6
+#module load python3/3.11.4
+#
 #export HDF5_ROOT_DIR=${HDF5_ROOT}
-#export OMPI_MCA_btl_portals4_use_rdma=0
-#module load python3/3.8.10
-#export PYTHONEXE=python3
 #export PYTHONHOME=$PYTHON3_ROOT
-#export PATH=$PYTHONHOME/bin:$PATH
 #export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
 
 #
@@ -20,4 +16,4 @@
 #
 # make machine=joliot_curie_rome config=no_mpi_tm
 
-CXXFLAGS += -march=core-avx2 -ip -inline-factor=1000 -qopt-zmm-usage=high -fno-alias #-ipo
+CXXFLAGS += -march=core-avx2 -qopt-zmm-usage=high -fno-alias #-ipo

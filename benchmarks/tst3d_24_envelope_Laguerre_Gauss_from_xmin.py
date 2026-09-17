@@ -24,8 +24,8 @@ mm                         = 1.e-3/c_over_omega0       # 1 mm in normalized unit
 fs                         = 1.e-15*omega0             # 1 femtosecond in normalized units
 
 ##### mesh resolution and simulation window size
-dy                         = 4*um                      # resolution along y
-ny                         = 24                        # number of mesh points along y
+dy                         = 2*um                      # resolution along y
+ny                         = 40                        # number of mesh points along y
 Ly                         = ny * dy                   # size of the simulation window along y
 
 dz                         = dy                        # resolution along z
@@ -45,14 +45,15 @@ Main(
     interpolation_order    = 2,
 
     timestep               = dt,
-    simulation_time        = 201.*dt,
+    simulation_time        = 401.*dt,
 
     cell_length            = [ dx,  dy, dz],
     grid_length            = [ Lx,  Ly, Lz],
 
     number_of_patches      = [8,4,4],
     
-    EM_boundary_conditions = [ ["silver-muller"] ],
+    EM_boundary_conditions = [ ["silver-muller","silver-muller"],["PML","PML"],["PML","PML"] ],
+    number_of_pml_cells    = [[0,0],[10,10],[10,10]],
 
     solve_poisson          = False,
     print_every            = 100,
@@ -66,7 +67,7 @@ laser_fwhm                 = 15.*fs
 center_laser               = 1.8*laser_fwhm # the time at which the laser peak enters the window from xmin
 time_envelope              = tgaussian(center=center_laser, fwhm=laser_fwhm)
 
-focus                      = [center_laser, Ly/2., Lz/2.]
+focus                      = [0., Ly/2., Lz/2.]
 omega                      = omega0/omega0
 
 waist_0                    = 20*um # this would be the waist of the fundamental mode m=0,n=0
@@ -74,8 +75,8 @@ waist_0                    = 20*um # this would be the waist of the fundamental 
 # Order p,l of the LG mode along r and theta respectively
 # p must be an integer greater or equal to zero
 # l must be an integer, it can be positive, negative or 0
-p                          = 0
-l                          = 2
+p                          = 1
+l                          = 0
 
 # LG field of order p,l at x=0 
 def LG_x_min(p,l,y,z):
@@ -149,7 +150,7 @@ LaserEnvelope(
     omega            = omega,
     envelope_solver  = 'explicit',
     envelope_profile = envelope_profile,
-    Envelope_boundary_conditions = [["reflective"]],
+    Envelope_boundary_conditions = [["reflective","reflective"],["PML","PML"],["PML","PML"]],
     polarization_phi = 0.,
     ellipticity      = 0.,
     box_side         = "xmin"

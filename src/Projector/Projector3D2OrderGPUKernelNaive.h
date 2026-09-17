@@ -40,7 +40,8 @@ namespace acc {
                                int    k_domain_begin,
                                int    nprimy,
                                int    nprimz,
-                               int    not_spectral )
+                               int    not_spectral,
+                               unsigned int oversize )
     {
 
     const unsigned int bin_count      = 1;
@@ -318,7 +319,8 @@ namespace acc {
                                          int    k_domain_begin,
                                          int    nprimy,
                                          int    nprimz,
-                                         int    not_spectral )
+                                         int    not_spectral,
+                                         unsigned int oversize )
     {
 
     const unsigned int bin_count      = 1;

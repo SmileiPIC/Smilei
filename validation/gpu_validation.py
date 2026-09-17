@@ -3,7 +3,7 @@ from easi import Validation
 import subprocess, sys
 
 # TODO: get list of all scripts starting with gpu_*.py instead
-list_test=["tst2d_01_plasma_mirror", "tst1d_03_thermal_expansion"]
+list_test=["tst3d_27_thermal-plasma-o2-bouchard","tst2d_26_thermal-plasma-o4-bouchard","tst2d_25_thermal-plasma-o2-bouchard","tst2d_01_plasma_mirror", "tst1d_03_thermal_expansion"]
 
 # create workdir for each test that includes: slurm submission script, smilei executable and the inputfile
 

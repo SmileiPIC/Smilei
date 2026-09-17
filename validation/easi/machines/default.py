@@ -12,7 +12,7 @@ class Machine(object):
         try:
             mpi_version = str(check_output("mpirun --version", shell=True))
             if re.search("Open MPI", mpi_version, re.I):
-                v = re.search("\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
+                v = re.search(r"\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
                 v = int(v.split(".")[0]) # Major version number
                 if v > 1:
                     MPIRUN = "mpirun --oversubscribe -np %d --map-by ppr:%d:socket:pe=%d"

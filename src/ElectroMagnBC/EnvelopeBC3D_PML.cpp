@@ -132,7 +132,7 @@ EnvelopeBC3D_PML::EnvelopeBC3D_PML( Params &params, Patch *patch, unsigned int i
         } else {
             zpml_size_in_x = patch->size_[0]+1+2*patch->oversize[0] + ncells_pml_xmin + ncells_pml_xmax;
             zpml_size_in_y = patch->size_[1]+1+2*patch->oversize[1] + ncells_pml_ymin + ncells_pml_ymax;
-            dimPrim = { (unsigned int)ypml_size_in_x, (unsigned int)zpml_size_in_y, (unsigned int)ncells_pml_domain };
+            dimPrim = { (unsigned int)zpml_size_in_x, (unsigned int)zpml_size_in_y, (unsigned int)ncells_pml_domain };
         }
         
         startpml = patch->oversize[iDim]+nsolver/2;

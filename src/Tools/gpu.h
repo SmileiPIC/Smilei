@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <type_traits>
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+#include <cuda.h>
+#endif
 
 #include "Tools.h"
 

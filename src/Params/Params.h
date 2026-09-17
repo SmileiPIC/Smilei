@@ -446,7 +446,7 @@ public:
     getGPUClusterGhostCellBorderWidth( int interpolation_order )
     {
     //#if defined( SMILEI_ACCELERATOR_GPU_OMP )
-        constexpr int kGPUClusterGhostCellCount[3]{ -1,
+        constexpr int kGPUClusterGhostCellCount[5]{ -1,
                                                     // Order 2 ghost cells on each "sides" of the dimension
                                                     2 * 2 +
                                                         // The std::round in the interpolator's coeffs function used to
@@ -459,6 +459,8 @@ public:
                                                         // NOTE: Instead we add a row and column in the cached field
                                                         // value.
                                                         1,
+                                                    -1,
+                                                    2 * 4 + 1,
                                                     -1 };
         return kGPUClusterGhostCellCount[interpolation_order - 1];
     //#else

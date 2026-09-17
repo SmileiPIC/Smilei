@@ -22,6 +22,7 @@ Projector2D2OrderGPU::Projector2D2OrderGPU( Params &parameters, Patch *a_patch )
     // Projector2D2OrderGPU's member variable after explicitly initializing
     // Projector2D.
     not_spectral_  = !parameters.is_pxr;
+    oversize_ = parameters.custom_oversize;
     cell_sorting_ = parameters.cell_sorting_;
     dt   = parameters.timestep;
     dts2 = dt / 2.0;
@@ -71,6 +72,7 @@ currentDepositionKernel2DOnDevice( double *__restrict__ Jx,
                          int    j_domain_begin,
                          int    nprimy,
                          int    not_spectral,
+                         unsigned int oversize,
                          bool   cell_sorting );
 
 extern "C" void
@@ -102,6 +104,7 @@ currentAndDensityDepositionKernel2DOnDevice( double *__restrict__ Jx,
                                    int    j_domain_begin,
                                    int    nprimy,
                                    int    not_spectral,
+                                   unsigned int oversize,
                                    bool   cell_sorting );
 
 
@@ -135,6 +138,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
               int    nprimy,
               double,
               int not_spectral,
+              unsigned int oversize,
               bool cell_sorting )
     {
         currentDepositionKernel2DOnDevice( Jx,
@@ -163,13 +167,14 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                  j_domain_begin,
                                  nprimy,
                                  not_spectral,
+                                 oversize,
                                  cell_sorting );
     }
 #else
     currents( double *__restrict__ , double *__restrict__ , double *__restrict__ , int, int, int,
               Particles   &, unsigned int , unsigned int ,const double *__restrict__ ,
               const int    *__restrict__ , const double *__restrict__ , double , double , double ,
-              double , double , int    , int    , int    , double, int, bool )
+              double , double , int    , int    , int    , double, int, unsigned int, bool )
     {
         SMILEI_ASSERT( false );
     }
@@ -204,6 +209,7 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                         int    nprimy,
                         double,
                         int not_spectral,
+                        unsigned int oversize,
                         bool cell_sorting )
     {
         currentAndDensityDepositionKernel2DOnDevice( Jx,
@@ -234,13 +240,14 @@ namespace { // Unnamed namespace == static == internal linkage == no exported sy
                                            j_domain_begin,
                                            nprimy,
                                            not_spectral,
+                                           oversize,
                                            cell_sorting );
     }
 #else
     currentsAndDensity( double *__restrict__ , double *__restrict__ , double *__restrict__ , double *__restrict__ ,
                         int , int , int , int , Particles   &, unsigned int , unsigned int ,
                         const double *__restrict__ , const int *__restrict__ , const double *__restrict__ ,
-                        double , double , double , double , double , int    , int    , int    , double, int, bool )
+                        double , double , double , double , double , int    , int    , int    , double, int, unsigned int, bool )
     {
         SMILEI_ASSERT( false );
     }
@@ -405,6 +412,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                             nprimy,
                             one_third,
                             not_spectral_,
+                            oversize_,
                             cell_sorting_ );
 
     } else {
@@ -441,6 +449,7 @@ void Projector2D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields,
                       nprimy,
                       one_third,
                       not_spectral_,
+                      oversize_,
                       cell_sorting_ );
         }
     }

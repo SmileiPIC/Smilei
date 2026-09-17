@@ -1,5 +1,5 @@
 ################### 3D Laser Wakefield with envelope
-dx = 1. 
+dx = 0.8
 dtrans = 3.
 dt = 0.8*dx
 nx = 192
@@ -32,6 +32,8 @@ Main(
     solve_poisson = False,
     print_every = 100,
     use_BTIS3_interpolation = True,
+
+    maxwell_solver = "Terzani",
 
 )
 

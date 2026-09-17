@@ -24,8 +24,8 @@ mm                         = 1.e-3/c_over_omega0       # 1 mm in normalized unit
 fs                         = 1.e-15*omega0             # 1 femtosecond in normalized units
 
 ##### mesh resolution and simulation window size
-dy                         = 4*um                      # resolution along y
-ny                         = 24                        # number of mesh points along y
+dy                         = 2*um                      # resolution along y
+ny                         = 40                        # number of mesh points along y
 Ly                         = ny * dy                   # size of the simulation window along y
 
 dz                         = dy                        # resolution along z
@@ -45,14 +45,15 @@ Main(
     interpolation_order    = 2,
 
     timestep               = dt,
-    simulation_time        = 201.*dt,
+    simulation_time        = 601.*dt,
 
     cell_length            = [ dx,  dy, dz],
     grid_length            = [ Lx,  Ly, Lz],
 
     number_of_patches      = [8,4,4],
     
-    EM_boundary_conditions = [ ["silver-muller"] ],
+    EM_boundary_conditions = [ ["silver-muller","silver-muller"],["PML","PML"],["PML","PML"] ],
+    number_of_pml_cells    = [[0,0],[10,10],[10,10]],
 
     solve_poisson          = False,
     print_every            = 100,
@@ -66,15 +67,15 @@ laser_fwhm                 = 15.*fs
 center_laser               = 1.8*laser_fwhm # the time at which the laser peak enters the window from xmin
 time_envelope              = tgaussian(center=center_laser, fwhm=laser_fwhm)
 
-focus                      = [center_laser, Ly/2., Lz/2.]
+focus                      = [0., Ly/2., Lz/2.]
 omega                      = omega0/omega0
 
 waist_0                    = 20*um # this would be the waist of the fundamental mode m=0,n=0
 
 # Order m,n of the HG mode along y and z respectively.
 # They must be integers greater or equal to zero.
-m                          = 1
-n                          = 0
+m                          = 0
+n                          = 1
 
 # HG field of order HG_order at x=0 in one transverse direction
 # the full HG field will be the multiplication of this function
@@ -138,7 +139,7 @@ LaserEnvelope(
     omega            = omega,
     envelope_solver  = 'explicit_reduced_dispersion',
     envelope_profile = envelope_profile,
-    Envelope_boundary_conditions = [["reflective"]],
+    Envelope_boundary_conditions = [["reflective","reflective"],["PML","PML"],["PML","PML"]],
     polarization_phi = 0.,
     ellipticity      = 0.,
     box_side         = "xmin"

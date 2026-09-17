@@ -1,0 +1,70 @@
+#
+# Machine file for RUCHE
+# __________________________________________________________
+#
+# Documentation:
+#https://mesocentre.pages.centralesupelec.fr/user_doc/ruche/01_cluster_overview/
+
+# Compile command: make -j 40  machine="ruche_gpu2" config="gpu_nvidia noopenmp detailed_timers verbose"
+
+SMILEICXX_DEPS = g++ #-I/gpfs/users/prouveurc/tools/hdfsrc/install/include/
+
+GPU_COMPILER = nvcc #-I/gpfs/users/prouveurc/tools/hdfsrc/install/include/ 
+
+CXXFLAGS += -w
+# IDRIS config for curand
+CXXFLAGS += -gpu=cc80 -acc=gpu -std=c++17  -lcurand #-ta=tesla:cc70 -std=c++14  -lcurand -cudalib=curand # do not put -cuda here
+# CXXFLAGS += --expt-relaxed-constexpr
+#cuda13.0,compute_80
+#ACCELERATOR_CUDA_FLAGS += -w -gpu=cc70,cc80 -cuda -std=c++14  -lcurand #not used at the moment
+CXXFLAGS += -I/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/nvhpc-26.1-4rc6mwvvrqsnuh5hnziikb4tz65h3a7u/Linux_x86_64/26.1/cuda/13.1/include/cccl/ #-I/gpfs/users/prouveurc/tools/nvhpc_2026_261_Linux_x86_64_cuda_13.1/Linux_x86_64/26.1/cuda/13.1/include/cccl/ #thrust
+#CXXFLAGS += -DCCCL_IGNORE_DEPRECATED_CPP_DIALECT
+
+CXXFLAGS += -I/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/nvhpc-26.1-4rc6mwvvrqsnuh5hnziikb4tz65h3a7u/Linux_x86_64/26.1/math_libs/13.1/include/
+
+# /gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/openmpi-4.1.8-hyfg3firik4fhtqjxrujr57cjstowkbe
+
+GPU_COMPILER_FLAGS += -O3 --std c++17 --extended-lambda #-I/gpfs/users/prouveurc/tools/openmpi-5.0.9_nvhpc26.1/include --extended-lambda
+
+GPU_COMPILER_FLAGS += --expt-relaxed-constexpr
+GPU_COMPILER_FLAGS += -arch=sm_80 #sm_89 # first compile completely with sm_80 then rm build/src/Projector/Projector3D2OrderGPUKernelCUDAHIP.o then compile again with sm_89 (no make clean !) #adapt for 2D  
+CXXFLAGS        += -Minfo=accel   # what is offloaded/copied
+# CXXFLAGS        += -Minfo=all   # very verbose output
+#CXXFLAGS += --nvcpplinkstubs
+
+
+# To turn on the OpenMP support, uncomment these 3 lines and comment the line just above defining 'SMILEI_ACCELERATOR_GPU_OACC'
+# CXXFLAGS        += -mp=gpu -DSMILEI_ACCELERATOR_GPU_OMP
+# GPU_COMPILER_FLAGS +=         -DSMILEI_ACCELERATOR_GPU_OMP # Can't we pass the -mp=gpu to nvcc when compiling a .cu file ?
+# LDFLAGS                      += -mp=gpu
+# required for -lintl -> -L/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/gettext-0.23.1-jjcwc7ug6uwmiippbgzkwmxe75xzny6u/lib/
+#LDFLAGS +=  -I/gpfs/users/prouveurc/tools/hdfsrc/install/lib
+LDFLAGS +=  -L/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/gettext-0.23.1-jjcwc7ug6uwmiippbgzkwmxe75xzny6u/lib/ #-L/gpfs/softs/spack_0.17/opt/spack/linux-centos7-haswell/nvhpc-23.7/hdf5-1.12.0-3em63nl4p5tmv37offfmuvz2uswvgwzv/lib
+LDFLAGS += -gpu=cc80 -acc=gpu -cuda -L/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/nvhpc-26.1-4rc6mwvvrqsnuh5hnziikb4tz65h3a7u/Linux_x86_64/26.1/math_libs/13.1/lib64/ #-L/gpfs/softs/spack_0.17/opt/spack/linux-centos7-cascadelake/nvhpc-23.7/cuda-11.8.0-j62qyr3fdv4uuxx3kln3ckwo4xoqrntx/lib64/ -gpu=cc80 -acc=gpu -cuda -cudalib=curand -lcurand 
+CXXFLAGS += -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1 #-I/gpfs/softs/spack_0.17/opt/spack/linux-centos7-cascadelake/nvhpc-23.7/cuda-11.8.0-j62qyr3fdv4uuxx3kln3ckwo4xoqrntx/include -std=c++14 
+#CXXFLAGS +=  -I/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/nvhpc-25.11-gpfz33jb64grkrfgnhrxig3jxvwxq6w5/Linux_x86_64/25.11/cuda/13.0/targets/x86_64-linux/include/
+LDFLAGS += #-Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive  #-lstdc++ #-lgcc_s -lgcc -lnvhpcatm -lnvc -lnvf
+LDFLAGS += #-L/gpfs/softs/spack_1.0.2/opt/spack/linux-cascadelake/gcc-15.1.0-yzoyqsakzd6u74qzhkzdmawls6acqzsv/lib64 -lstdc++ #--nvcpplinkstubs
+############################################
+#  example of a job script
+############################################
+
+#!/bin/bash
+#
+##SBATCH --job-name=validation_smilei
+##SBATCH --output=%x.o%j 
+##SBATCH --time=00:20:00 
+##SBATCH --ntasks=1                   # Number of MPI processes (= total number of GPU)
+##SBATCH --ntasks-per-node=1          # nombre de tache MPI par noeud (= nombre de GPU par noeud)
+##SBATCH --gres=gpu:1
+##SBATCH --partition=gpu_test
+#
+## Load necessary modules
+#source /gpfs/users/prouveurc/env_smilei.sh
+#module load anaconda3/2022.10/gcc-11.2.0
+#
+## Run cuda code
+#LD_PRELOAD=/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/gcc-11.2.0-mpv3i3uebzvnvz7wxn6ywysd5hftycj3/lib64/libstdc++.so.6.0.29 ./smilei input.py
+#
+#
+

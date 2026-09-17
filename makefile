@@ -197,6 +197,7 @@ endif
 # Detailed timers
 ifneq (,$(call parse_config,detailed_timers))
 	CXXFLAGS += -D__DETAILED_TIMERS
+	GPU_COMPILER_FLAGS += -D__DETAILED_TIMERS
 endif
 
 # NVIDIA GPUs

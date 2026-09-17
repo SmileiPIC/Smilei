@@ -17,7 +17,7 @@ MF_Solver2D_Bouchard::MF_Solver2D_Bouchard(Params &params)
     //double dt_ov_dx  = dt/dx;
     //double dt_ov_dy  = dt/dy;
     if( dx!=dy ) {
-        ERROR( "Bouchard solver requires the same cell-length in x and y directions" );
+        WARNING( "Bouchard solver works best with identical cell-lengths in all directions" );
     }
     if( dx_ov_dt!=2 ) {
         WARNING( "Bouchard solver requires dx/dt = 2 (Magical Timestep)" );
@@ -67,95 +67,224 @@ void MF_Solver2D_Bouchard::operator() ( ElectroMagn* fields )
     // Field2D* Bz2D = static_cast<Field2D*>(fields->Bz_);
 
     // Static-cast of the fields
-    Field2D* Ex2D;
-    Field2D* Ey2D;
-    Field2D* Ez2D;
-    if (isEFilterApplied) {
-        Ex2D = static_cast<Field2D*>(fields->filter_->Ex_[0]);
-        Ey2D = static_cast<Field2D*>(fields->filter_->Ey_[0]);
-        Ez2D = static_cast<Field2D*>(fields->filter_->Ez_[0]);
-    } else {
-        Ex2D = static_cast<Field2D*>(fields->Ex_);
-        Ey2D = static_cast<Field2D*>(fields->Ey_);
-        Ez2D = static_cast<Field2D*>(fields->Ez_);
-    }
-    Field2D* Bx2D = static_cast<Field2D*>(fields->Bx_);
-    Field2D* By2D = static_cast<Field2D*>(fields->By_);
-    Field2D* Bz2D = static_cast<Field2D*>(fields->Bz_);
+    // ! LEGACY !
+    // Field2D* Ex2D;
+    // Field2D* Ey2D;
+    // Field2D* Ez2D;
+    // if (isEFilterApplied) {
+    //     Ex2D = static_cast<Field2D*>(fields->filter_->Ex_[0]);
+    //     Ey2D = static_cast<Field2D*>(fields->filter_->Ey_[0]);
+    //     Ez2D = static_cast<Field2D*>(fields->filter_->Ez_[0]);
+    // } else {
+    //     Ex2D = static_cast<Field2D*>(fields->Ex_);
+    //     Ey2D = static_cast<Field2D*>(fields->Ey_);
+    //     Ez2D = static_cast<Field2D*>(fields->Ez_);
+    // }
+    // Field2D* Bx2D = static_cast<Field2D*>(fields->Bx_);
+    // Field2D* By2D = static_cast<Field2D*>(fields->By_);
+    // Field2D* Bz2D = static_cast<Field2D*>(fields->Bz_);
+    const double *const __restrict__ Ex2D = isEFilterApplied ? fields->filter_->Ex_[0]->data() :
+                                                               fields->Ex_->data(); // [x * ny_p + y] : dual in x   primal in y,z
+    const double *const __restrict__ Ey2D = isEFilterApplied ? fields->filter_->Ey_[0]->data() :
+                                                               fields->Ey_->data(); // [x * ny_d + y] : dual in y   primal in x,z
+    const double *const __restrict__ Ez2D = fields->Ez_->data();                    // [x * ny_p + y] : dual in z   primal in x,y
+    double *const __restrict__ Bx2D       = fields->Bx_->data();                    // [x * ny_d + y] : dual in y,z primal in x
+    double *const __restrict__ By2D       = fields->By_->data();                    // [x * ny_p + y] : dual in x,z primal in y
+    double *const __restrict__ Bz2D       = fields->Bz_->data();                    // [x * ny_d + y] : dual in x,y primal in z
 
-
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    const int sizeofEx = fields->Ex_->number_of_points_;
+    const int sizeofEy = fields->Ey_->number_of_points_;
+    const int sizeofEz = fields->Ez_->number_of_points_;
+    const int sizeofBx = fields->Bx_->number_of_points_;
+    const int sizeofBy = fields->By_->number_of_points_;
+    const int sizeofBz = fields->Bz_->number_of_points_;
+    
     // Magnetic field Bx^(p,d)
+    #pragma acc parallel present( Bx2D[0:sizeofBx], Ez2D[0:sizeofEz] )                                               
+    #pragma acc loop gang                
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 2 )
+#endif
     for (unsigned int i=1 ; i<nx_p-1;  i++) {
+#if !defined( SMILEI_ACCELERATOR_GPU )
+        #pragma omp simd
+#endif
+#ifdef SMILEI_ACCELERATOR_GPU_OACC                                                                                                             
+        #pragma acc loop vector                                                                                                    
+#endif
         for (unsigned int j=2 ; j<ny_d-2 ; j++) {
-            (*Bx2D)(i,j) += Ay * ((*Ez2D)(i,j-1)-(*Ez2D)(i,j))
-                          + By * ((*Ez2D)(i+1,j-1)-(*Ez2D)(i+1,j) + (*Ez2D)(i-1,j-1)-(*Ez2D)(i-1,j))
-                          + Dy * ((*Ez2D)(i,j-2)-(*Ez2D)(i,j+1));
+            //(*Bx2D)(i,j) += Ay * ((*Ez2D)(i,j-1)-(*Ez2D)(i,j))
+            //              + By * ((*Ez2D)(i+1,j-1)-(*Ez2D)(i+1,j) + (*Ez2D)(i-1,j-1)-(*Ez2D)(i-1,j))
+            //              + Dy * ((*Ez2D)(i,j-2)-(*Ez2D)(i,j+1));
+            Bx2D[i*ny_d+j] += Ay * ( Ez2D[i * ny_p + j - 1] - Ez2D[i * ny_p + j] )
+                            + By * ( Ez2D[(i+1) * ny_p + j - 1]-Ez2D[(i+1) * ny_p + j] + Ez2D[(i-1) * ny_p + j - 1]-Ez2D[(i-1) * ny_p + j] )
+                            + Dy * ( Ez2D[i * ny_p + j - 2]-Ez2D[i * ny_p + j + 1] );
         }
     }
     
     // Magnetic field By^(d,p)
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    #pragma acc parallel present( By2D[0:sizeofBy], Ez2D[0:sizeofEz] )
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 2 )
+#endif
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
+#if !defined( SMILEI_ACCELERATOR_GPU )
+        #pragma omp simd
+#endif
+#ifdef SMILEI_ACCELERATOR_GPU_OACC                                                                                                             
+        #pragma acc loop vector                                                                                                    
+#endif
         for (unsigned int j=1 ; j<ny_p-1 ; j++) {
-            (*By2D)(i,j) += Ax * ((*Ez2D)(i,j) - (*Ez2D)(i-1,j))
-                          + Bx * ((*Ez2D)(i,j+1)-(*Ez2D)(i-1,j+1) + (*Ez2D)(i,j-1)-(*Ez2D)(i-1,j-1))
-                          + Dx * ((*Ez2D)(i+1,j) - (*Ez2D)(i-2,j));
+            //(*By2D)(i,j) += Ax * ((*Ez2D)(i,j) - (*Ez2D)(i-1,j))
+            //              + Bx * ((*Ez2D)(i,j+1)-(*Ez2D)(i-1,j+1) + (*Ez2D)(i,j-1)-(*Ez2D)(i-1,j-1))
+            //              + Dx * ((*Ez2D)(i+1,j) - (*Ez2D)(i-2,j));
+            By2D[i * ny_p + j] += Ax * ( Ez2D[i * ny_p + j] - Ez2D[( i - 1 ) * ny_p + j] )
+                                + Bx * ( Ez2D[i * ny_p + j+1] - Ez2D[( i - 1 ) * ny_p + j+1] + Ez2D[i * ny_p + j-1] - Ez2D[( i - 1 ) * ny_p + j-1] )
+                                + Dx * ( Ez2D[(i+1) * ny_p + j] - Ez2D[( i - 2 ) * ny_p + j] );
         }
     }
        
     // Magnetic field Bz^(d,d)
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    #pragma acc parallel present( Bz2D[0:sizeofBz], Ex2D[0:sizeofEx], Ey2D[0:sizeofEy] )
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for collapse( 2 )
+#endif
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
+#if !defined( SMILEI_ACCELERATOR_GPU )
+        #pragma omp simd
+#endif
+#ifdef SMILEI_ACCELERATOR_GPU_OACC                                                                                                             
+        #pragma acc loop vector                                                                                                    
+#endif
         for (unsigned int j=2 ; j<ny_d-2 ; j++) {
-            (*Bz2D)(i,j) += Ay * ((*Ex2D)(i,j)-(*Ex2D)(i,j-1))
-                          + By * ((*Ex2D)(i+1,j)-(*Ex2D)(i+1,j-1) + (*Ex2D)(i-1,j)-(*Ex2D)(i-1,j-1))
-                          + Dy * ((*Ex2D)(i,j+1)-(*Ex2D)(i,j-2))
-                          + Ax * ((*Ey2D)(i-1,j)-(*Ey2D)(i,j))
-                          + Bx * ((*Ey2D)(i-1,j+1)-(*Ey2D)(i,j+1) + (*Ey2D)(i-1,j-1)-(*Ey2D)(i,j-1))
-                          + Dx * ((*Ey2D)(i-2,j)-(*Ey2D)(i+1,j));
+            //(*Bz2D)(i,j) += Ay * ((*Ex2D)(i,j)-(*Ex2D)(i,j-1))
+            //              + By * ((*Ex2D)(i+1,j)-(*Ex2D)(i+1,j-1) + (*Ex2D)(i-1,j)-(*Ex2D)(i-1,j-1))
+            //              + Dy * ((*Ex2D)(i,j+1)-(*Ex2D)(i,j-2))
+            //              + Ax * ((*Ey2D)(i-1,j)-(*Ey2D)(i,j))
+            //              + Bx * ((*Ey2D)(i-1,j+1)-(*Ey2D)(i,j+1) + (*Ey2D)(i-1,j-1)-(*Ey2D)(i,j-1))
+            //              + Dx * ((*Ey2D)(i-2,j)-(*Ey2D)(i+1,j));
+            Bz2D[i * ny_d + j] += Ay * (Ex2D[i * ny_p + j] - Ex2D[i * ny_p + j - 1])
+                                 + By * (Ex2D[( i + 1 ) * ny_p + j] - Ex2D[( i + 1 ) * ny_p + j - 1] + Ex2D[( i - 1 ) * ny_p + j] - Ex2D[( i - 1 )  * ny_p + j - 1])
+                                 + Dy * (Ex2D[i * ny_p + j+1] - Ex2D[i * ny_p + j - 2])
+                                 + Ax * (Ey2D[( i - 1 ) * ny_d + j] - Ey2D[i * ny_d + j])
+                                 + Bx * (Ey2D[( i - 1 ) * ny_d + j+1] - Ey2D[i * ny_d + j+1] + Ey2D[( i - 1 ) * ny_d + j-1] - Ey2D[i * ny_d + j-1])
+                                 + Dx * (Ey2D[( i - 2 ) * ny_d + j] - Ey2D[(i+1) * ny_d + j]);
         }
     }
 
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    //for (unsigned int j=0 ; j<ny_p ; j++) {
+    //    (*By2D)(1,j) += dt_ov_dx * ( (*Ez2D)(1,j) - (*Ez2D)(0,j) );
+    //}
+    //// at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+    //for (unsigned int j=0 ; j<ny_p ; j++) {
+    //    (*By2D)(nx_d-2,j) += dt_ov_dx * ( (*Ez2D)(nx_d-2,j) - (*Ez2D)(nx_d-3,j) );
+    //}
+
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    #pragma acc parallel present( By2D[0:sizeofBy], Ez2D[0:sizeofEz] )
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for
+#endif
     for (unsigned int j=0 ; j<ny_p ; j++) {
-        (*By2D)(1,j) += dt_ov_dx * ( (*Ez2D)(1,j) - (*Ez2D)(0,j) );
-    }
-    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
-    for (unsigned int j=0 ; j<ny_p ; j++) {
-        (*By2D)(nx_d-2,j) += dt_ov_dx * ( (*Ez2D)(nx_d-2,j) - (*Ez2D)(nx_d-3,j) );
+        // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+        By2D[1 * ny_p + j] += dt_ov_dx * ( Ez2D[1 * ny_p + j] - Ez2D[( 0 ) * ny_p + j] );
+        // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+	By2D[(nx_d-2) * ny_p + j] += dt_ov_dx * ( Ez2D[(nx_d-2) * ny_p + j] - Ez2D[( (nx_d-3) ) * ny_p + j] );
     }
     
-    // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    // // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+    // for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+    //     (*Bz2D)(1,j) += dt_ov_dx * ( (*Ey2D)(0,j) - (*Ey2D)(1,j)   )
+    //     +               dt_ov_dy * ( (*Ex2D)(1,j) - (*Ex2D)(1,j-1) );
+    // }
+    // // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+    // for (unsigned int j=2 ; j<ny_d-2 ; j++) {
+    //     (*Bz2D)(nx_d-2,j) += dt_ov_dx * ( (*Ey2D)(nx_d-3,j) - (*Ey2D)(nx_d-2,j)   )
+    //     +                    dt_ov_dy * ( (*Ex2D)(nx_d-2,j) - (*Ex2D)(nx_d-2,j-1) );
+    // }
+
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    #pragma acc parallel present( Bz2D[0:sizeofBz], Ex2D[0:sizeofEx], Ey2D[0:sizeofEy] )
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for
+#endif
     for (unsigned int j=2 ; j<ny_d-2 ; j++) {
-        (*Bz2D)(1,j) += dt_ov_dx * ( (*Ey2D)(0,j) - (*Ey2D)(1,j)   )
-        +               dt_ov_dy * ( (*Ex2D)(1,j) - (*Ex2D)(1,j-1) );
-    }
-    // at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
-    for (unsigned int j=2 ; j<ny_d-2 ; j++) {
-        (*Bz2D)(nx_d-2,j) += dt_ov_dx * ( (*Ey2D)(nx_d-3,j) - (*Ey2D)(nx_d-2,j)   )
-        +                    dt_ov_dy * ( (*Ex2D)(nx_d-2,j) - (*Ex2D)(nx_d-2,j-1) );
+	// at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
+        Bz2D[1 * ny_d + j] += dt_ov_dx * (Ey2D[( 0 ) * ny_d + j] - Ey2D[1 * ny_d + j])
+	+	              dt_ov_dy * (Ex2D[( 1 ) * ny_p + j] - Ex2D[1 * ny_p + j - 1]);
+	// at Xmax-dx - treat using simple discretization of the curl (will be overwritten if not at the xmax-border)
+	Bz2D[(nx_d-2) * ny_d + j] += dt_ov_dx * (Ey2D[(nx_d-3) * ny_d + j] - Ey2D[(nx_d-2) * ny_d + j])
+        +                            dt_ov_dy * (Ex2D[(nx_d-2) * ny_p + j] - Ex2D[(nx_d-2) * ny_p + j - 1]);
     }
 
-    // at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+    //// at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+    //for (unsigned int i=0 ; i<nx_p ; i++) {
+    //    (*Bx2D)(i,1) += dt_ov_dy * ( (*Ez2D)(i,0) - (*Ez2D)(i,1) );
+    //}
+    //// at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
+    //for (unsigned int i=0 ; i<nx_p ; i++) {
+    //    (*Bx2D)(i,ny_d-2) += dt_ov_dy * ( (*Ez2D)(i,ny_d-3) - (*Ez2D)(i,ny_d-2) );
+    //}
+
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    #pragma acc parallel present( Bx2D[0:sizeofBx], Ez2D[0:sizeofEz] )                                               
+    #pragma acc loop gang vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for
+#endif
     for (unsigned int i=0 ; i<nx_p ; i++) {
-        (*Bx2D)(i,1) += dt_ov_dy * ( (*Ez2D)(i,0) - (*Ez2D)(i,1) );
+        // at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+        Bx2D[i*ny_d+1] += dt_ov_dy * ( Ez2D[i * ny_p + 0] - Ez2D[i * ny_p + 1] );
+        // at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
+        Bx2D[i*ny_d+ny_d-2] += dt_ov_dy * ( Ez2D[i * ny_p + ny_d-3] - Ez2D[i * ny_p + ny_d-2] );
     }
-    // at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        (*Bx2D)(i,ny_d-2) += dt_ov_dy * ( (*Ez2D)(i,ny_d-3) - (*Ez2D)(i,ny_d-2) );
-    }
-    // at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+
+    //// at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+    //for (unsigned int i=2 ; i<nx_d-2 ; i++) {
+    //    (*Bz2D)(i,1) += dt_ov_dx * ( (*Ey2D)(i-1,1) - (*Ey2D)(i,1)   )
+    //    +               dt_ov_dy * ( (*Ex2D)(i,1) - (*Ex2D)(i,0) );
+    //}
+    //// at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
+    //for (unsigned int i=2 ; i<nx_d-2 ; i++) {
+    //    (*Bz2D)(i,ny_d-2) += dt_ov_dx * ( (*Ey2D)(i-1,ny_d-2) - (*Ey2D)(i,ny_d-2)   )
+    //    +                    dt_ov_dy * ( (*Ex2D)(i,ny_d-2) - (*Ex2D)(i,ny_d-3) );
+    //}
+
+#if defined( SMILEI_ACCELERATOR_GPU_OACC )
+    #pragma acc parallel present( Bz2D[0:sizeofBz], Ex2D[0:sizeofEx], Ey2D[0:sizeofEy] )
+    #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target
+    #pragma omp teams distribute parallel for 
+#endif
+// #if !defined( SMILEI_ACCELERATOR_GPU )
+//         #pragma omp simd
+// #endif
+// #ifdef SMILEI_ACCELERATOR_GPU_OACC                                                                                                             
+//             #pragma acc loop vector                                                                                                    
+// #endif
     for (unsigned int i=2 ; i<nx_d-2 ; i++) {
-        (*Bz2D)(i,1) += dt_ov_dx * ( (*Ey2D)(i-1,1) - (*Ey2D)(i,1)   )
-        +               dt_ov_dy * ( (*Ex2D)(i,1) - (*Ex2D)(i,0) );
+        // at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+        Bz2D[i * ny_d + 1] += dt_ov_dx * (Ey2D[( i - 1 ) * ny_d + 1] - Ey2D[i * ny_d + 1])
+        +                     dt_ov_dy * (Ex2D[i * ny_p + 1] - Ex2D[i * ny_p + 0]);
+        // at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
+        Bz2D[i * ny_d + (ny_d-2)] += dt_ov_dx * (Ey2D[( i - 1 ) * ny_d + (ny_d-2)] - Ey2D[i * ny_d + (ny_d-2)])
+        +                            dt_ov_dy * (Ex2D[i * ny_p + (ny_d-2)] - Ex2D[i * ny_p + (ny_d-3)]);
     }
-    // at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
-    for (unsigned int i=2 ; i<nx_d-2 ; i++) {
-        (*Bz2D)(i,ny_d-2) += dt_ov_dx * ( (*Ey2D)(i-1,ny_d-2) - (*Ey2D)(i,ny_d-2)   )
-        +                    dt_ov_dy * ( (*Ex2D)(i,ny_d-2) - (*Ex2D)(i,ny_d-3) );
-    }
-  
 
 //}// end parallel
 }//END solveMaxwellFaraday
-
-
-

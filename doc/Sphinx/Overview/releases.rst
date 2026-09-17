@@ -26,7 +26,7 @@ Changes made in the repository (not released)
 * **Ported to GPU**:
 
   * Collisions (without ionization or nuclear reaction)
-  * 3D scheme for Bouchard Maxwell-Faraday solver (without particles)
+  * 2D and 3D scheme for Bouchard Maxwell-Faraday solver ensuring compatibility with 2D2Order, 2D4order and 3D3Order GPU Projector
 
 * **Features**:
 
@@ -37,10 +37,12 @@ Changes made in the repository (not released)
   * 1st order Ruyten shape function in AM geometry.
   * Support for collisions in single mode AM geometry.
   * Remove experimental support for task parallelization.
-  * Low dispersion Maxwell solver ``"Terzani"`` from `this article <https://doi.org/10.1016/j.cpc.2019.04.007>`_ in ``"AMcylindrical"`` geometry.
+  * Low dispersion Maxwell solver ``"Terzani"`` from `this article <https://doi.org/10.1016/j.cpc.2019.04.007>`_ in ``"2Dcartesian"`` and ``"AMcylindrical"`` geometry.
   * Tunnel ionization supports fullPPT model and 2 BSI models.
   * Prescribed fields with dynamic load balancing.
   * Custom oversize in AM geometry solvers.
+  * New 2D and 3D laser block and profile to help using spatial and temporal smoothed-beam.
+  * LaserEnvelope model: added PML for solver ``"explicit_reduced_dispersion"`` in 2D and 3D geometry.
 
 * **Bug fixes**:
 
@@ -61,6 +63,10 @@ Changes made in the repository (not released)
   * Fix PrescribedFields with MLMD.
   * Field synchronization between patches is now done after application of boundary conditions and all points are systematically exchanged.
   * Fixed segmentation fault when using Multiphoton Breit-Wheeler in ``AMcylindrical`` geometry.
+  * Laser envelope model: fixed risk of deadlock for laser injection from ``xmin`` when many OpenMP threads are used.
+  * Laser envelope: fixed on-axis noise in AMcylindrical simulations using interpolation order 1.
+  * Fix PML envelope size definition in 3D geometry.
+  * Fix bug of repeated RNG seed  when the moving window is active.
 
 * **Experimental**
 

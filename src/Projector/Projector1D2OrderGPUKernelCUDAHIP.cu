@@ -155,6 +155,8 @@ namespace cudahip1d {
                                          ComputeFloat dx_inv,
                                          ComputeFloat dx_ov_dt,
                                          int          i_domain_begin,
+                                         int          not_spectral_,
+                                         unsigned int oversize_,
                                          bool         cell_sorting )
         {
             const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
@@ -262,7 +264,8 @@ namespace cudahip1d {
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
                 const int ipo = iold[0 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
-                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */ -
+                                (oversize_-2);
 
                 // Jx
                 ComputeFloat tmpJx = 0.0; 
@@ -298,7 +301,7 @@ namespace cudahip1d {
 
             for( unsigned int field_index = thread_index_offset; field_index < kFieldScratchSpaceSize; field_index += workgroup_size ) {
                 const unsigned int local_x_scratch_space_coordinate = field_index % GPUClusterWithGCWidth; // /GPUClusterWithGCWidth
-                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
+                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate+(oversize_-2);
 
                 const unsigned int global_memory_index = global_x_scratch_space_coordinate;
                 const unsigned int scratch_space_index = field_index; // local_x_scratch_space_coordinate * GPUClusterWithGCWidth + local_y_scratch_space_coordinate;
@@ -337,6 +340,8 @@ namespace cudahip1d {
                                             ComputeFloat dx_inv,
                                             ComputeFloat dx_ov_dt,
                                             int          i_domain_begin,
+                                            int          not_spectral_,
+                                            unsigned int oversize_,
                                             bool         cell_sorting )
         {
             const unsigned int workgroup_size = kWorkgroupSize; // blockDim.x;
@@ -440,7 +445,8 @@ namespace cudahip1d {
                 // This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
                 const int ipo = iold[0 * particle_count] -
                                 2 /* Offset so we dont uses negative numbers in the loop */ -
-                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */;
+                                global_x_scratch_space_coordinate_offset /* Offset to get cluster relative coordinates */ -
+                                (oversize_-2);
 
                 // Jx
                 ComputeFloat tmpJx = 0.0; 
@@ -486,7 +492,7 @@ namespace cudahip1d {
                  field_index += workgroup_size ) {
 
                 const unsigned int local_x_scratch_space_coordinate = field_index % GPUClusterWithGCWidth;
-                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate;
+                const unsigned int global_x_scratch_space_coordinate = global_x_scratch_space_coordinate_offset + local_x_scratch_space_coordinate+(oversize_-2);
 
                 const unsigned int global_memory_index = global_x_scratch_space_coordinate;
                 const unsigned int scratch_space_index = field_index;
@@ -524,6 +530,8 @@ namespace cudahip1d {
                              double dx_inv,
                              double dx_ov_dt,
                              int    i_domain_begin,
+                             int    not_spectral_,
+                             unsigned int oversize_,
                              bool   cell_sorting )
     {
         SMILEI_ASSERT( Params::getGPUClusterWidth( 1 /* 1D */ ) != -1 &&
@@ -569,6 +577,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
+                            not_spectral_,
+                            oversize_,
                             cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
@@ -597,6 +607,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
+                            not_spectral_,
+                            oversize_,
                             cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );
@@ -627,6 +639,8 @@ namespace cudahip1d {
                                        double dx_inv,
                                        double dx_ov_dt,
                                        int    i_domain_begin,
+                                       int    not_spectral_,
+                                       unsigned int oversize_,
                                        bool cell_sorting )
     {
         // & because one  1D ; 2 because of 2nd order interpolation
@@ -666,6 +680,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
+                            not_spectral_,
+                            oversize_,
                             cell_sorting );
 
         checkHIPErrors( ::hipDeviceSynchronize() );
@@ -695,6 +711,8 @@ namespace cudahip1d {
                             dx_inv,
                             dx_ov_dt,
                             i_domain_begin,
+                            not_spectral_,
+                            oversize_,
                             cell_sorting
                        );
         checkHIPErrors( ::cudaDeviceSynchronize() );

@@ -125,11 +125,12 @@ void Patch::initStep1( Params &params )
         tmp_MPI_neighbor_[iDim].resize( 2, MPI_PROC_NULL );
     }
     
-    // Initialize the random number generator
-    rand_ = new Random( params.random_seed + hindex );
 
     // Obtain the cell_volume
     cell_volume = params.cell_volume;
+
+    // Initialize rand_ to null to handle regions which do not need a RNG.
+    rand_ = nullptr;
 }
 
 
@@ -168,6 +169,8 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     //    max_local_[1] += params.cell_length[1]/2.;
     //    center_   [1] += params.cell_length[1]/2.;
     //}
+    // Initialize the random number generator
+    rand_ = new Random( params.random_seed + hindex + n_moved*params.tot_number_of_patches );
 
 }
 
@@ -473,7 +476,9 @@ Patch::~Patch()
     }
     vecSpecies.clear();
 
-    delete rand_;
+    if (rand_) {
+        delete rand_;
+    }
 
 } // END Patch::~Patch
 

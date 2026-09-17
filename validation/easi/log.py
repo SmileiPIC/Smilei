@@ -5,12 +5,12 @@ from .tools import *
 
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
-    pattern1 = re.compile(""
-        +"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\% coverage"
-        +"([\n\t\s]+([\w ]+)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%){2,15}"
+    pattern1 = re.compile(r""
+        +r"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\% coverage"
+        +r"([\n\t\s]+([\w ]+)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%){2,15}"
     )
-    pattern2 = re.compile(""
-        +"[\t\s]+([\w ]+):?\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%"
+    pattern2 = re.compile(r""
+        +r"[\t\s]+([\w ]+):?\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%"
     )
 
     def __init__(self, log_path, log_file):

@@ -247,7 +247,7 @@ double cField2D::norm2_cylindrical( unsigned int istart[3][2], unsigned int bufs
                 unsigned int j = idxlocalstart[1];
                 sum += data_2D[i][j].real()*data_2D[i][j].real() + data_2D[i][j].imag()*data_2D[i][j].imag();
             }
-            nrj *= sum / 8.; // volume factor for on-axis cells is 1./8.
+            nrj += sum / 8.; // volume factor for on-axis cells is 1./8.
         }
         idxlocalstart[1]++;
     }
