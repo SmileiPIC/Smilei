@@ -578,6 +578,139 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         delay_phase    = delay_phase
     )
 
+def LaserSquareFlattenedGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_offset=0.,N=10,flattened_intensity_position="far_from_focus"):
+    import numpy as np
+    import scipy.special as sp
+    assert len(focus)==2, "LaserSquareFlattenedGaussian2D: focus must be a list of length 2."
+    assert incidence_angle == 0, "LaserSquareFlattenedGaussian2D: currently only incidence_angle=0 is supported."
+    assert box_side == "xmin", "LaserSquareFlattenedGaussian2D: currently only box_side=xmin is supported."
+    assert isinstance(N, int), "LaserSquareFlattenedGaussian2D: N must be an integer."
+    assert (
+            flattened_intensity_position == "far_from_focus"
+            or flattened_intensity_position == "at_focus"
+           ), (
+           "LaserSquareFlattenedGaussian2D: flattened_intensity_position must be either 'at_focus' or 'far_from_focus'."
+           )
+
+    # Polarization and amplitude
+    dephasing, amplitudeZ, amplitudeY = transformPolarization(polarization_phi, ellipticity)
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
+    delay_phase = [0., dephasing]
+
+    # Waist and Rayleigh length
+    waist_corrected = (
+                       waist * np.sqrt(N + 1) if flattened_intensity_position == "far_from_focus"
+                       else waist / np.sqrt(N + 1)
+                       )
+    # Rayleigh length, normalized
+    x_R  = omega * waist_corrected**2/2.
+
+    # Store the Hermite-Gauss (HG) mode coefficients
+    cn = np.zeros(N+1)
+    for n in range(N+1):
+        m_values = np.arange(n, N+1)
+        # computing this in log scale and then using the exponential
+        # avoids overflow for high N
+        # remember that gamma(n+1)=n!
+        log_terms = (
+                    -3*m_values*np.log(2.)
+                    + sp.gammaln(2*m_values+1)
+                    - sp.gammaln(m_values+1)
+                    - sp.gammaln(m_values-n+1))
+        cn[n] = np.sum(np.exp(log_terms - np.max(log_terms))) \
+                    * np.exp(np.max(log_terms) - sp.gammaln(2*n+1))
+
+    # The HG mode coefficients have alternating signs
+    # if the flattened profile is far from focus
+    if flattened_intensity_position == "far_from_focus":
+        cn = cn*(-1.)**np.arange(N+1)
+
+    # Normalizing quantity to have a normalized peak field before the multiplication by a0
+    # This recursive way of computing it avoids the overflow given by a brute force calculation
+    # of the factorial
+    def S_N(N):
+            S = 0.0
+            k = 1.0  # k_0 = 1
+            for m in range(0, N+1):
+                    S += k
+                    # update a -> a_{m+1}
+                    k *= (2*m + 1) / (2*(m + 1))
+            return S
+
+    normalization_constant = 1. if (flattened_intensity_position=="at_focus") else S_N(N)
+
+    # Store Hermite polynomials
+    def even_hermite_polynomials(x, N):
+        # Returns an array of Hermite polynomials with even index using recursion relations
+        H_even = np.empty((N+1,) + np.shape(x), dtype=float)
+        H0 = np.ones_like(x)
+        H_even[0] = H0
+        if N == 0:
+            return H_even
+        H1   = 2*x
+        Hnm2 = H0
+        Hnm1 = H1
+        even = 1
+
+        for k in range(1, 2*N):
+            Hn = 2*x*Hnm1 - 2*k*Hnm2
+            Hnm2 = Hnm1
+            Hnm1 = Hn
+            if (k+1) % 2 == 0:
+                H_even[even] = Hn
+                even += 1
+
+        return H_even
+
+    # Compute constant terms at x=0
+    x              = 0.
+    # HG mode waist at x
+    w              = waist_corrected * np.sqrt(1 + ((x-focus[0]) /x_R)**2)
+    # HG mode Gouy phase argument at x, to multiply by the the mode factor
+    Gouy_phase_arg = np.arctan2((x-focus[0]),x_R)
+    # HG mode curved wavefront at x
+    one_ov_R       = (x - focus[0]) / ((x - focus[0])**2 + x_R**2)
+
+    # Square flattened Gauss definition in 2D Cartesian geometry
+    # Compared to a 3D definition, the amplitude decreases as 1/sqrt(w(x)/w0) instead of 1/(w(x)/w0)
+    # and the Gouy phase is different
+    def rectangular_flattened_Gaussian_beam2D(y):
+        y              = np.asarray(y)
+        curved_phase_y = np.exp(1j * omega * (y-focus[1])**2 * one_ov_R / 2 )
+        # HG mode exponential decay
+        exp_along_y    = np.exp(-(y-focus[1])**2 / w**2)
+        # Precompute the Hermite polynomials
+        mask           = exp_along_y > 0.
+        y_scaled       = np.sqrt(2) * (y-focus[1]) / w
+        H = np.zeros((N+1,) + y.shape, dtype=float)
+        if np.any(mask):
+            H[:, mask] = even_hermite_polynomials(y_scaled[mask], N) # Only evaluate Hermite polynomials where the Gaussian has not underflown to zero
+            H          = np.nan_to_num(H,nan=0.0,posinf=0.0,neginf=0.0) # convert the nan to zero, that can happen only when the exponential is ~0
+        # Sum the HG modes parts that change for each mode
+        HG_field_along_y = np.zeros_like(y,dtype=complex)
+        for n in range(0, N+1):
+            HG_field_along_y += cn[n] * H[n] * np.exp(-1j*(2*n+1/2.)*Gouy_phase_arg)
+        # Multiply the result by the part in common for all modes
+        HG_field_along_y = HG_field_along_y * exp_along_y * curved_phase_y * np.sqrt(waist_corrected/w)
+
+        return HG_field_along_y/normalization_constant
+
+    # define the Laser at x=0 through the space_time profile of By and Bz
+    def complex_envelope(y,t):
+        return rectangular_flattened_Gaussian_beam2D(y)*time_envelope(t)*np.exp(-1j*phase_offset)
+    def By_profile(y,t):
+        return amplitudeY*np.real(complex_envelope(y,t)*np.exp(1j*delay_phase[1])*np.exp(-1j*omega*t))
+    def Bz_profile(y,t):
+        return amplitudeZ*np.real(complex_envelope(y,t)*np.exp(1j*delay_phase[0])*np.exp(-1j*omega*t))
+
+    # Create Laser
+    Laser(
+        box_side = "xmin",
+        space_time_profile = [ By_profile, Bz_profile ]
+    )
+
 def rotation(x,y,ang) :
     '''
     Lineare tranformation: Rotation matrix
