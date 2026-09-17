@@ -609,6 +609,10 @@ public:
                 LINK_NAMELIST + std::string("#species")
             );
         }
+		std::vector<std::vector<double> > threshold_angle_input;
+		bool has_threshold_angle = PyTools::extractVV(
+		"threshold_angle", threshold_angle_input, "Species", ispec
+		);
 
         unsigned int number_of_boundaries = (params.geometry=="AMcylindrical") ? 2 : params.nDim_particle;
 
@@ -632,49 +636,69 @@ public:
         }
 
 
-        bool has_thermalize = false;
-        std::ostringstream t;
-        for( unsigned int iDim=0; iDim<number_of_boundaries; iDim++ ) {
-            if( this_species->boundary_conditions_[iDim].size() == 1 ) {
-                this_species->boundary_conditions_[iDim].push_back( this_species->boundary_conditions_[iDim][0] );
-            }
-            if( this_species->boundary_conditions_[iDim].size() != 2 ) {
-                ERROR_NAMELIST(
-                    "For species '" << species_name
-                    << "', boundary_conditions["<<iDim
-                    <<"] must have one or two arguments" ,
-                    LINK_NAMELIST + std::string("#species")
-                );
-            }
-            for( unsigned int ii=0; ii<2; ii++ ) {
-                if( this_species->boundary_conditions_[iDim][ii] == "thermalize" ) {
-                    has_thermalize = true;
-                    if( this_species->mass_ == 0 ) {
-                        ERROR_NAMELIST(
-                            "For photon species '" << species_name
-                            << "' Thermalizing BCs are not available." ,
-                            LINK_NAMELIST + std::string("#species")
-                        );
-                    }
-                } else if( this_species->boundary_conditions_[iDim][ii] == "stop" ) {
-                    if( this_species->mass_ == 0 ) {
-                        ERROR_NAMELIST(
-                            "For photon species '" << species_name
-                             << "' stop BCs are not physical.",
-                             LINK_NAMELIST + std::string("#species")
-                         );
-                    }
-                } else if( this_species->boundary_conditions_[iDim][ii] == "periodic" && params.EM_BCs[iDim][ii] != "periodic" ) {
-                    ERROR_NAMELIST(
-                        "For species '" << species_name
-                        << "',  boundary_conditions["<<iDim
-                        <<"] cannot be periodic as the EM boundary conditions are not periodic",
-                        LINK_NAMELIST + std::string("#species")
-                    );
-                }
-                t << " " << this_species->boundary_conditions_[iDim][ii];
-            }
-        }
+		bool has_thermalize = false;
+		bool has_angle_threshold_bc = false;
+		std::vector<unsigned int> angle_threshold_dims;
+
+		std::ostringstream t;
+		for( unsigned int iDim=0; iDim<number_of_boundaries; iDim++ ) {
+			if( this_species->boundary_conditions_[iDim].size() == 1 ) {
+				this_species->boundary_conditions_[iDim].push_back( this_species->boundary_conditions_[iDim][0] );
+			}
+			if( this_species->boundary_conditions_[iDim].size() != 2 ) {
+				ERROR_NAMELIST(
+					"For species '" << species_name
+					<< "', boundary_conditions["<<iDim
+					<<"] must have one or two arguments" ,
+					LINK_NAMELIST + std::string("#species")
+				);
+			}
+
+			bool dim_has_angle_threshold = false;
+
+			for( unsigned int ii=0; ii<2; ii++ ) {
+				std::string &bc = this_species->boundary_conditions_[iDim][ii];
+
+				if( bc == "thermalize" || bc == "angle_threshold" ) {
+					has_thermalize = true;
+
+					if( this_species->mass_ == 0 ) {
+						ERROR_NAMELIST(
+							"For photon species '" << species_name
+							<< "' Thermalizing BCs are not available." ,
+							LINK_NAMELIST + std::string("#species")
+						);
+					}
+
+					if( bc == "angle_threshold" ) {
+						has_angle_threshold_bc = true;
+						dim_has_angle_threshold = true;
+					}
+
+				} else if( bc == "stop" ) {
+					if( this_species->mass_ == 0 ) {
+						ERROR_NAMELIST(
+							"For photon species '" << species_name
+							 << "' stop BCs are not physical.",
+							 LINK_NAMELIST + std::string("#species")
+						 );
+					}
+				} else if( bc == "periodic" && params.EM_BCs[iDim][ii] != "periodic" ) {
+					ERROR_NAMELIST(
+						"For species '" << species_name
+						<< "',  boundary_conditions["<<iDim
+						<<"] cannot be periodic as the EM boundary conditions are not periodic",
+						LINK_NAMELIST + std::string("#species")
+					);
+				}
+
+				t << " " << bc;
+			}
+
+			if( dim_has_angle_threshold ) {
+				angle_threshold_dims.push_back( iDim );
+			}
+		}
         if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions_[1][1] != "remove" ) && ( this_species->boundary_conditions_[1][1] != "stop" ) && ( this_species->boundary_conditions_[1][1] != "reflective" ) ) {
             ERROR_NAMELIST(
                 " In AM geometry particle boundary conditions supported in Rmax are 'remove', 'reflective' and 'stop' ",
@@ -688,7 +712,64 @@ public:
             );
         }
         MESSAGE( 2, "> Boundary conditions:" << t.str() );
+		this_species->threshold_angle_.assign(
+			number_of_boundaries,
+			std::vector<double>( 2, -1.0 )
+		);
 
+		if( has_angle_threshold_bc ) {
+
+			if( !has_threshold_angle ) {
+				ERROR_NAMELIST(
+					"For species '" << species_name
+					<< "', threshold_angle must be defined when using angle_threshold boundary_conditions",
+					LINK_NAMELIST + std::string("#species")
+				);
+			}
+
+			if( threshold_angle_input.size() != angle_threshold_dims.size() ) {
+				ERROR_NAMELIST(
+					"For species '" << species_name
+					<< "', threshold_angle must have as many rows as the number of dimensions using angle_threshold",
+					LINK_NAMELIST + std::string("#species")
+				);
+			}
+
+			for( unsigned int k=0; k<angle_threshold_dims.size(); k++ ) {
+				unsigned int iDim = angle_threshold_dims[k];
+
+				if( threshold_angle_input[k].size() != 2 ) {
+					ERROR_NAMELIST(
+						"For species '" << species_name
+						<< "', threshold_angle[" << k << "] must have exactly 2 values [min,max]",
+						LINK_NAMELIST + std::string("#species")
+					);
+				}
+
+				for( unsigned int ii=0; ii<2; ii++ ) {
+					if( this_species->boundary_conditions_[iDim][ii] == "angle_threshold" ) {
+						double a = threshold_angle_input[k][ii];
+
+						if( a < 0.0 || a > 0.5*M_PI ) {
+							ERROR_NAMELIST(
+								"For species '" << species_name
+								<< "', threshold_angle values must satisfy 0 <= angle <= pi/2",
+								LINK_NAMELIST + std::string("#species")
+							);
+						}
+
+						this_species->threshold_angle_[iDim][ii] = a;
+					}
+				}
+			}
+
+		} else if( has_threshold_angle ) {
+			ERROR_NAMELIST(
+				"For species '" << species_name
+				<< "', threshold_angle is defined but no angle_threshold boundary condition is used",
+				LINK_NAMELIST + std::string("#species")
+			);
+		}
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extractV( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
         bool has_velocity    = PyTools::extractV( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec ) > 0;
@@ -1039,6 +1120,7 @@ public:
         new_species->relativistic_field_initialization_        = species->relativistic_field_initialization_;
         new_species->iter_relativistic_initialization_         = species->iter_relativistic_initialization_;
         new_species->boundary_conditions_                      = species->boundary_conditions_;
+		new_species->threshold_angle_						   = species->threshold_angle_;
         new_species->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
         new_species->thermal_boundary_velocity_                = species->thermal_boundary_velocity_;
         new_species->thermal_velocity_                         = species->thermal_velocity_;
