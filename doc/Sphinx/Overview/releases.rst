@@ -43,6 +43,9 @@ Changes made in the repository (not released)
   * Custom oversize in AM geometry solvers.
   * New 2D and 3D laser block and profile to help using spatial and temporal smoothed-beam.
   * LaserEnvelope model: added PML for solver ``"explicit_reduced_dispersion"`` in 2D and 3D geometry.
+  * New ``Laser`` creator: ``LaserCircularFlattenedGaussianAM`` for ``AMcylindrical`` geometry.
+  * New ``Laser`` creators: ``LaserSquareFlattenedGaussian2D`` and ``LaserEnvelopeSquareFlattenedGaussian2D`` for ``2Dcartesian`` geometry.
+  * New ``Laser`` creators: ``LaserCircularFlattenedGaussian3D`` and ``LaserEnvelopeCircularFlattenedGaussian3D`` for ``3Dcartesian`` geometry.
 
 * **Bug fixes**:
 
