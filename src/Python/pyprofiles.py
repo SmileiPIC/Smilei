@@ -1655,7 +1655,7 @@ def LaserCircularFlattenedGaussian3D( box_side="xmin", a0=1., omega=1., focus=No
     normalization_constant = 1. if (flattened_intensity_position=="at_focus") else (N+1)
 
     # Store Laguerre polynomials
-    def Laguerre_polynomials(x, N):
+    def store_Laguerre_polynomials(x, N):
         # Returns an array of Laguerre polynomials using recursion relations
         L = np.empty((N+1,) + np.shape(x), dtype=float)
         for n in range(0, N+1):
@@ -1688,7 +1688,7 @@ def LaserCircularFlattenedGaussian3D( box_side="xmin", a0=1., omega=1., focus=No
         L = np.zeros((N+1,) + r.shape, dtype=float)
         if np.any(mask):
             # Only evaluate Laguerre polynomials where the Gaussian has not underflown to zero
-            L[:, mask] = Laguerre_polynomials(r_sq_scaled[mask], N)
+            L[:, mask] = store_Laguerre_polynomials(r_sq_scaled[mask], N)
             # Convert the nan to zero, that can happen only when the exponential is ~0
             L          = np.nan_to_num(L,nan=0.0,posinf=0.0,neginf=0.0) 
         # Sum the LG modes parts that change for each mode
@@ -2542,7 +2542,7 @@ def LaserEnvelopeCircularFlattenedGaussian3D( a0=1., omega=1., focus=None, waist
     normalization_constant = 1. if (flattened_intensity_position=="at_focus") else (N+1)
 
     # Store Laguerre polynomials
-    def Laguerre_polynomials(x, N):
+    def store_Laguerre_polynomials(x, N):
         # Returns an array of Laguerre polynomials using recursion relations
         L = np.empty((N+1,) + np.shape(x), dtype=float)
         for n in range(0, N+1):
@@ -2576,7 +2576,7 @@ def LaserEnvelopeCircularFlattenedGaussian3D( a0=1., omega=1., focus=None, waist
         L = np.zeros((N+1,) + r.shape, dtype=float)
         if np.any(mask):
             # Only evaluate Laguerre polynomials where the Gaussian has not underflown to zero
-            L[:,mask]  = Laguerre_polynomials(r_sq_scaled[mask], N)
+            L[:,mask]  = store_Laguerre_polynomials(r_sq_scaled[mask], N)
             # Convert the nan to zero, that can happen only when the exponential is ~0
             L          = np.nan_to_num(L,nan=0.0,posinf=0.0,neginf=0.0) 
         # Sum the LG modes parts that change for each mode
@@ -2680,7 +2680,7 @@ def LaserCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., focus=No
     normalization_constant = 1. if (flattened_intensity_position=="at_focus") else (N+1)
 
     # Store Laguerre polynomials
-    def Laguerre_polynomials(x, N):
+    def store_Laguerre_polynomials(x, N):
         # Returns an array of Laguerre polynomials using recursion relations
         L = np.empty((N+1,) + np.shape(x), dtype=float)
         for n in range(0, N+1):
@@ -2713,7 +2713,7 @@ def LaserCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., focus=No
         L = np.zeros((N+1,) + r.shape, dtype=float)
         if np.any(mask):
             # Only evaluate Laguerre polynomials where the Gaussian has not underflown to zero
-            L[:, mask]   = Laguerre_polynomials(r_sq_scaled[mask], N)
+            L[:, mask]   = store_Laguerre_polynomials(r_sq_scaled[mask], N)
             # convert the nan to zero, that can happen only when the exponential is ~0
             L            = np.nan_to_num(L,nan=0.0,posinf=0.0,neginf=0.0)
         # Sum the LG modes parts that change for each mode
