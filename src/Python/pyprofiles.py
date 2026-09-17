@@ -604,7 +604,7 @@ def LaserSquareFlattenedGaussian2D( box_side="xmin", a0=1., omega=1., focus=None
                        waist * np.sqrt(N + 1) if flattened_intensity_position == "far_from_focus"
                        else waist / np.sqrt(N + 1)
                        )
-    # Rayleigh length, normalized
+    # Effective Rayleigh length, normalized
     x_R  = omega * waist_corrected**2/2.
 
     # Store the Hermite-Gauss (HG) mode coefficients
@@ -686,8 +686,10 @@ def LaserSquareFlattenedGaussian2D( box_side="xmin", a0=1., omega=1., focus=None
         y_scaled       = np.sqrt(2) * (y-focus[1]) / w
         H = np.zeros((N+1,) + y.shape, dtype=float)
         if np.any(mask):
-            H[:, mask] = even_hermite_polynomials(y_scaled[mask], N) # Only evaluate Hermite polynomials where the Gaussian has not underflown to zero
-            H          = np.nan_to_num(H,nan=0.0,posinf=0.0,neginf=0.0) # convert the nan to zero, that can happen only when the exponential is ~0
+            # Only evaluate Hermite polynomials where the Gaussian has not underflown to zero
+            H[:, mask] = even_hermite_polynomials(y_scaled[mask], N)
+            # Convert the nan to zero, that can happen only when the exponential is ~0
+            H          = np.nan_to_num(H,nan=0.0,posinf=0.0,neginf=0.0)
         # Sum the HG modes parts that change for each mode
         HG_field_along_y = np.zeros_like(y,dtype=complex)
         for n in range(0, N+1):
@@ -1407,6 +1409,141 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
         polarization_phi             = polarization_phi,
         ellipticity                  = ellipticity
     )
+
+def LaserEnvelopeSquareFlattenedGaussian2D( a0=1., omega=1., focus=None, waist=3., N=10, time_envelope=tconstant(),
+        envelope_solver = "explicit",box_side = "inside",Envelope_boundary_conditions = [["reflective"]],
+        polarization_phi = 0.,ellipticity = 0.,flattened_intensity_position="far_from_focus"):
+    import numpy as np
+    import scipy.special as sp
+    assert len(focus)==2, "LaserEnvelopeSquareFlattenedGaussian2D: focus must be a list of length 2."
+    assert isinstance(N, int), "LaserEnvelopeSquareFlattenedGaussian2D: N must be an integer."
+    assert (
+            flattened_intensity_position == "far_from_focus"
+            or flattened_intensity_position == "at_focus"
+           ), (
+           "LaserEnvelopeSquareFlattenedGaussian2D: flattened_intensity_position must be either 'at_focus' or 'far_from_focus'."
+           )
+
+    # Effective waist
+    waist_corrected = (
+                       waist * np.sqrt(N + 1) if flattened_intensity_position == "far_from_focus"
+                       else waist / np.sqrt(N + 1)
+                       )
+
+    # Effective Rayleigh length, normalized
+    x_R  = omega * waist_corrected**2/2.
+
+    # Polarization amplitude factor
+    polarization_amplitude_factor = 1/np.sqrt(1.+ellipticity**2)
+
+    # Store the Hermite-Gauss (HG) mode coefficients
+    cn = np.zeros(N+1)
+    for n in range(N+1):
+        m_values = np.arange(n, N+1)
+        # computing this in log scale and then using the exponential
+        # avoids overflow for high N
+        # remember that gamma(n+1)=n!
+        log_terms = (
+                    -3*m_values*np.log(2.)
+                    + sp.gammaln(2*m_values+1)
+                    - sp.gammaln(m_values+1)
+                    - sp.gammaln(m_values-n+1))
+        cn[n] = np.sum(np.exp(log_terms - np.max(log_terms))) \
+                    * np.exp(np.max(log_terms) - sp.gammaln(2*n+1))
+
+    # The HG mode coefficients have alternating signs
+    # if the flattened profile is far from focus
+    if flattened_intensity_position == "far_from_focus":
+        cn = cn*(-1.)**np.arange(N+1)
+
+    # Normalizing quantity to have a normalized peak before the multiplication by a0
+    # This recursive way of computing it avoids the overflow given by a brute force calculation
+    # of the factorial
+    def S_N(N):
+        S = 0.0
+        k = 1.0  # k_0 = 1
+        for m in range(0, N+1):
+            S += k
+            # update a -> a_{m+1}
+            k *= (2*m + 1) / (2*(m + 1))
+        return S
+
+    normalization_constant = 1. if (flattened_intensity_position=="at_focus") else S_N(N)
+
+    # Recursive definition of the HG modes with even index
+    def even_hermite_polynomials(x, N):
+        # Returns an array of Hermite polynomials with even index using recursion relations
+        H_even = np.empty((N+1,) + np.shape(x), dtype=float)
+        H0 = np.ones_like(x)
+        H_even[0] = H0
+        if N == 0:
+            return H_even
+        H1   = 2*x
+        Hnm2 = H0
+        Hnm1 = H1
+        even = 1
+
+        for k in range(1, 2*N):
+            Hn = 2*x*Hnm1 - 2*k*Hnm2
+            Hnm2 = Hnm1
+            Hnm1 = Hn
+            if (k+1) % 2 == 0:
+                H_even[even] = Hn
+                even += 1
+
+        return H_even
+
+    # Square flattened Gauss definition in 2D Cartesian geometry
+    def rectangular_flattened_Gaussian_beam2D(x,y):
+        x, y             = np.broadcast_arrays(x, y)
+        # HG mode waist at x
+        w                = waist_corrected * np.sqrt(1 + ((x-focus[0]) /x_R)**2)
+        # HG mode Gouy phase argument at x, to multiply by the the mode factor
+        Gouy_phase_arg   = np.arctan2((x-focus[0]),x_R)
+        # HG mode curved wavefront at x
+        one_ov_R         = (x - focus[0]) / ((x - focus[0])**2 + x_R**2)
+        curved_phase_y   = np.exp(1j * omega * (y-focus[1])**2 * one_ov_R / 2 )
+        # HG mode exponential decay
+        exp_along_y      = np.exp(-(y-focus[1])**2 / w**2)
+        # Precompute the Hermite polynomials
+        mask             = exp_along_y > 0.
+        y_scaled         = np.sqrt(2) * (y-focus[1]) / w
+        H = np.zeros((N+1,) + y.shape, dtype=float)
+        if np.any(mask):
+            # Only evaluate Hermite polynomials where the Gaussian has not underflown to zero
+            H[:, mask]   = even_hermite_polynomials(y_scaled[mask], N)
+            # Convert the nan to zero, that can happen only when the exponential is ~0
+            H            = np.nan_to_num(H,nan=0.0,posinf=0.0,neginf=0.0)
+        # Sum the HG modes parts that change for each mode
+        HG_field_along_y = np.zeros_like(y,dtype=complex)
+        for n in range(0, N+1):
+            HG_field_along_y += cn[n] * H[n] * np.exp(-1j*(2*n+1/2.)*Gouy_phase_arg)
+        # Multiply by the part in common for all modes
+        HG_field_along_y = HG_field_along_y * exp_along_y * curved_phase_y * np.sqrt(waist_corrected/w)
+
+        return a0*omega*polarization_amplitude_factor*HG_field_along_y/normalization_constant
+
+    # Return the complex envelope, including the temporal envelope
+    if (box_side=="inside"):
+        def envelope_profile(x,y,t):
+            return rectangular_flattened_Gaussian_beam2D(x,y)*(time_envelope)(t))
+    elif (box_side=="xmin"):
+        def envelope_profile(y,t):
+            return rectangular_flattened_Gaussian_beam2D(0,y)*(time_envelope)(t))
+    else:
+        print("LaserEnvelope error: box_side must be either 'inside' or 'xmin'. ")
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega                        = omega,
+        envelope_profile             = envelope_profile,
+        envelope_solver              = envelope_solver,
+        box_side                     = box_side,
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
+        polarization_phi             = polarization_phi,
+        ellipticity                  = ellipticity
+    )
+
 
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_offset=0.):
