@@ -2263,3 +2263,219 @@ except:
         )
         print("WARNING: LaserOffset unavailable because numpy was not found")
 
+def LaserFromLasy(filename, dt, dtrans, Ltrans, ntrans, N_time, Nm, lambda_0,omega_0, reference_frequency, box_side="xmin"):
+    
+    #Reads a Lasy HDF5 file and returns a Smilei Laser object with azimuthal modes.
+    
+    from scipy.interpolate import RegularGridInterpolator
+    # Load  Data 
+    f =  h5py.File(filename, mode='r') 
+    dset = f['data']['0']['meshes']['laserEnvelope']
+    data = dset[:,:,:]
+    datadt, datadr = f['data']['0']['meshes']['laserEnvelope'].attrs.get("gridSpacing") 
+    datantheta, datant, datanr = data.shape
+    datadtheta=(2*np.pi/datantheta)
+    dataB   = data/cst.c
+
+    # Physical constants 
+    #lambda0 = 0.8e-6
+    #omega0 = 2 * np.pi * cst.c / lambda_0
+    omega_ratio = omega_0 / reference_frequency
+    onel = cst.c / omega_0
+    onet = 1. / omega_0
+    oneB = cst.m_e*omega_0/cst.e #Field
+    onen = cst.epsilon_0*cst.m_e*omega_0**2/cst.e**2 #Density
+
+    datadt  /= onet
+    datadr  /= onel
+    dataB   /= oneB
+
+    datatheta= np.linspace(0, 2 * np.pi,datantheta , endpoint=False)
+    datat = np.linspace(0, datant*datadt, datant)
+    datar = np.linspace(0, datanr*datadr, datanr)
+    
+    ### Lasy mode reconstruction according to the way modes are stored in h5 files
+    def reconstruct_rt_field_lasy(data, t_index, theta_grid):
+       
+        ncomp, _, Nr = data.shape
+        n_theta = len(theta_grid)
+
+        E_rt = np.zeros((n_theta, Nr), dtype=np.complex128)
+
+        # m = 0
+        E_rt += data[0, t_index][None, :]
+
+        # higher modes
+        m = 1
+        idx = 1
+        while idx + 1 < ncomp:
+            C_m = data[idx, t_index]     
+            S_m = data[idx + 1, t_index] 
+
+            E_rt += (
+                C_m[None, :] * np.cos(m * theta_grid[:, None]) +
+                S_m[None, :] * np.sin(m * theta_grid[:, None])
+            )
+            
+            m += 1
+            idx += 2
+
+        return E_rt
+
+    #Complex envelope interpolator
+    Bz_theta=np.zeros((datantheta,datant,datanr), dtype=np.complex128)
+
+    for i in range(datant):
+        Bz_theta[:,i,:]=reconstruct_rt_field_lasy(dataB, t_index=i, theta_grid=datatheta)
+
+    B_interp = RegularGridInterpolator((datatheta,datat, datar),Bz_theta)
+    #nprect = np.vectorize(cmath.rect)
+    
+    def Bzreal(theta, t, r):
+        theta = np.asarray(theta)
+        t = np.asarray(t)
+        r = np.asarray(r)
+
+        # Create a mask for valid entries  for the interpolation to happen only inside the mask
+        valid_mask = (
+            (theta >= datatheta[0]) & (theta <= datatheta[-1]) &
+            (t >= datat[0]) & (t <= datat[-1]) &
+            (r >= datar[0]) & (r <= datar[-1])
+        )
+
+        # Create output array initialized to zero (complex)
+        result = np.zeros_like(theta, dtype=np.complex128)
+
+        # Apply interpolation only where valid
+        if np.any(valid_mask):
+            points = np.stack((theta[valid_mask], t[valid_mask], r[valid_mask]), axis=-1)
+            result[valid_mask] = B_interp(points)
+
+        return np.real(result)
+
+
+    def Bzimag(theta, t, r):
+        theta = np.asarray(theta)
+        t = np.asarray(t)
+        r = np.asarray(r)
+
+        # Create a mask for valid entries for the interpolation to happen only inside the mask
+        valid_mask = (
+            (theta >= datatheta[0]) & (theta <= datatheta[-1]) &
+            (t >= datat[0]) & (t <= datat[-1]) &
+            (r >= datar[0]) & (r <= datar[-1])
+        )
+
+        # Create output array initialized to zero (complex)
+        result = np.zeros_like(theta, dtype=np.complex128)
+
+        # Apply interpolation only where valid
+        if np.any(valid_mask):
+            points = np.stack((theta[valid_mask], t[valid_mask], r[valid_mask]), axis=-1)
+            result[valid_mask] = B_interp(points)
+
+        return np.imag(result)
+
+    def get_laser_Br_Bt(Bz,theta):
+        Br= Bz*np.sin(theta)
+        Bt= Bz*np.cos(theta)
+        return (Br, Bt)
+
+    def get_laser_decomposed(Br_laser,Bt_laser ):
+        Br_m_3d = np.fft.ifft(Br_laser, axis=0)
+        Bt_m_3d = np.fft.ifft(Bt_laser, axis=0)
+        return(Br_m_3d, Bt_m_3d )
+
+    # 4. Decompose onto Simulation Grid
+    simtheta=datatheta 
+    simt = np.linspace(dt/2, N_time*dt+dt/2, N_time+1) 
+    simr = np.linspace(0, Ltrans+2*dtrans+dtrans/2, (ntrans+3)*2) 
+    
+    tt, xt, yr = np.meshgrid(datatheta, simt, simr, indexing="ij") 
+    #Reconstruction of the data on the simulation grid
+    simgrid_bz_real = Bzreal(tt,xt,yr)
+    simgrid_bz_imag = Bzimag(tt,xt,yr)
+ 
+    #From By and Bz get Br and Bt on the polar mesh
+    Br_laserreal, Bt_laserreal = get_laser_Br_Bt(simgrid_bz_real , tt)
+    Br_laserimag, Bt_laserimag = get_laser_Br_Bt(simgrid_bz_imag, tt)
+    #Decompose Br and Bt into azimuthal modes
+    Br_mreal, Bt_mreal =get_laser_decomposed(Br_laserreal,Bt_laserreal)
+    Br_mimag, Bt_mimag =get_laser_decomposed(Br_laserimag,Bt_laserimag)
+
+    #Reconstruct Brreal and Btreal per modes as in the code (modes > 0 are doubled),
+    #Nm is the numver of AM modes
+    Brreal=np.zeros((Nm,len(simt),len(simr)), dtype='complex')
+    Btreal=np.zeros((Nm,len(simt),len(simr)), dtype='complex')
+    Brreal[0,:,:]=Br_mreal[0,:,:]
+    Brreal[1:Nm,:,:]=2*Br_mreal[1:Nm,:,:]
+    Btreal[0,:,:]=Bt_mreal[0,:,:]
+    Btreal[1:Nm,:,:]=2*Bt_mreal[1:Nm,:,:]
+
+    #Reconstruct Brimag and Btimag per modes as in the code (modes > 0 are doubled) 
+    Brimag=np.zeros((Nm,len(simt),len(simr)), dtype='complex')
+    Btimag=np.zeros((Nm,len(simt),len(simr)), dtype='complex')
+    Brimag[0,:,:]=Br_mimag[0,:,:]
+    Brimag[1:Nm,:,:]=2*Br_mimag[1:Nm,:,:]
+    Btimag[0,:,:]=Bt_mimag[0,:,:]
+    Btimag[1:Nm,:,:]=2*Bt_mimag[1:Nm,:,:]
+
+    def build_mode_functions(Brreal, Brimag, Btreal, Btimag, Nm, dt, dtrans, N_time):
+
+        mode_functions = []
+
+        for m in range(Nm):
+
+            def make_Br(m):
+
+                def Br_mode(r, t):
+                    if t < N_time * dt:
+                        it = round(t/dt - 0.5)
+                        ir = round(2*r/dtrans)
+
+                        return np.complex128(
+                            Brreal[m, it, ir] * np.cos(omega_ratio*t) +
+                            Brimag[m, it, ir] * np.sin(omega_ratio*t)
+                        )
+                    else:
+                        return 0.0
+
+                return Br_mode 
+
+            def make_Bt(m):
+
+                def Bt_mode(r, t):
+                    if t < N_time * dt:
+                        it = round(t/dt - 0.5)
+                        ir = round(2*r/dtrans)
+
+                        return np.complex128(
+                            Btreal[m, it, ir] * np.cos(omega_ratio*t) +
+                            Btimag[m, it, ir] * np.sin(omega_ratio*t)
+                        )
+                    else:
+                        return 0.0
+
+                return Bt_mode 
+
+            mode_functions.append(make_Br(m))
+            mode_functions.append(make_Bt(m))
+
+        return mode_functions
+    
+
+    mode_functions = build_mode_functions(
+        Brreal,
+        Brimag,
+        Btreal,
+        Btimag,
+        Nm,
+        dt,
+        dtrans,
+        N_time
+    )
+
+    Laser(
+        box_side         = box_side,
+        space_time_profile_AM =  mode_functions
+    )
