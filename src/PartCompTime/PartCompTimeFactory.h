@@ -3,6 +3,7 @@
 
 #include "PartCompTime.h"
 #include "PartCompTime1D2Order.h"
+#include "PartCompTime1D4Order.h"
 #include "PartCompTime2D2Order.h"
 #include "PartCompTime2D4Order.h"
 #include "PartCompTime3D2Order.h"
@@ -26,11 +27,10 @@ public:
         
             part_comp_time = new PartCompTime1D2Order();
         
-        // }
-        // else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
-        //
-        //     // part_comp_time = new PartCompTime1D4Order( params, patch );
-        //
+        } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+
+            part_comp_time = new PartCompTime1D4Order();
+
         }
         // ---------------
         // 2Dcartesian simulation
