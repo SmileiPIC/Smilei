@@ -1648,7 +1648,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     An extra phase added to both the envelope and to the carrier wave.
 
 
-.. rubric:: 4. Defining a 2D gaussian wave
+.. rubric:: 4. Defining a 2D Gaussian wave
 
 ..
 
@@ -1687,7 +1687,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     The angle of the laser beam relative to the normal to the injection plane, in radians.
 
 
-.. rubric:: 5. Defining a 3D gaussian wave
+.. rubric:: 5. Defining a 3D Gaussian wave
 
 ..
 
