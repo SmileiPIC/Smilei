@@ -103,80 +103,15 @@ laser_fwhm                         = 90*fs                           # fwhm dura
 center_laser                       = 1.8*laser_fwhm if envelope_box_side=="xmin" else Lx-1.8*laser_fwhm
 time_envelope                      = tgaussian(center=center_laser, fwhm=laser_fwhm)
 
-
-def FGB(N,x,r): 
-    # Flattened Gaussian Beam (FGB) laser profile,
-    # defined by the PALLAS team 
-    # for the article P. Drobniak et al, PRAB 2023 (https://doi.org/10.1103/PhysRevAccelBeams.26.091302). 
-    # This implementation is inspired from G. Maynard and FBPIC definition of FGB,
-    # here defined in normalized units. 
-    # 
-    # See M. Santarsiero et al, Journal of Modern Optics 1997 (https://doi.org/10.1080/09500349708232927)
-    # for the definition of the FGB profile.
-    
-    N = int(round(N))               # order of the Flattened Gaussian Beam; N=0 is a Gaussian beam
-    w_foc = waist_0 * np.sqrt(N+1)  # smilei units, with w0 the waist at focus of from order N = 0
-    zr = 0.5 * (w_foc)**2           # smilei units, effective rayleigh length for FGB
-    inv_zr = 1./zr
-    diffract_factor = 1. + 1j * (x - focus[0]) * inv_zr
-    w = w_foc * np.abs( diffract_factor )
-    scaled_radius_squared = 2 * ( r**2 ) / w**2
-    psi = np.angle(diffract_factor)
-    laguerre_sum = np.zeros_like( r, dtype=np.complex128 )
-    for n in range(0, N+1):
-        # Recursive calculation of the Laguerre polynomial
-        # - `L` represents $L_n$
-        # - `L1` represents $L_{n-1}$
-        # - `L2` represents $L_{n-2}$
-        if n==0:
-            L = 1.
-        elif n==1:
-            L1 = L
-            L = 1. - scaled_radius_squared
-        else:
-            L2 = L1
-            L1 = L
-            L = (((2*n -1) - scaled_radius_squared) * L1 - (n - 1) * L2) / n
-        # Add to the sum, including the term for the additional Gouy phase
-        cn = np.empty(N+1)
-        m_values = np.arange(n, N+1)
-        cn[n] = np.sum((1./2)**m_values * binom(m_values,n)) / (N+1)
-        laguerre_sum += cn[n] * np.exp( - (2j* n) * psi ) * L
-
-    # space envelope
-    exp_argument =  - (r**2) / (w_foc**2 * diffract_factor)
-    spatial_envelope = laguerre_sum * np.exp(exp_argument) /  diffract_factor
-    # full envelope profile
-    profile = a0 * spatial_envelope
-
-    return profile
-
-# to avoid calculating the FGB mode at each timestep , 
-# we pre-compute its value at x=0 at the grid points
-r_mesh         = np.linspace(-2*dr, (nr+2)*dr, nr+2*2+1) # Assumes primal and 2 ghost cells per direction
-
-FGB_at_xmin    = FGB(N,0,r_mesh)
-
-# free memory
-r_mesh         = None
-
-# The envelope profile will be the multiplication 
-# of the pre-computed transverse profile and the time envelope
-def envelope_profile(r, t):
-    # Compute nearest grid indices
-    j = np.clip(np.round((r+2*dr) / dr).astype(int), 0, nr + 4)
-    # Sample the HG field at x=0 from the pre-saved array, multiply by the time envelope
-    return FGB_at_xmin[j] * time_envelope(t)
-    
-    
-def envelope_profile_inside(x,r,t):
-    return FGB(N,x,r) * time_envelope(t)
-    
-LaserEnvelope(
+LaserEnvelopeCircularFlattenedGaussianAM(
+    a0               = a0,
+    order_N          = N,
+    waist            = waist_0,
+    focus            = focus,
     omega            = omega,
     envelope_solver  = 'explicit_reduced_dispersion',
-    envelope_profile = envelope_profile if envelope_box_side=="xmin" else envelope_profile_inside,
     Envelope_boundary_conditions = [["reflective"]],
+    time_envelope    = time_envelope,
     polarization_phi = 0.,
     ellipticity      = 0.,
     box_side         = envelope_box_side
