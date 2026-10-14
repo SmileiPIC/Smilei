@@ -14,10 +14,10 @@
 #
 # module purge
 # module load craype-accel-amd-gfx90a craype-x86-trento
-# module load PrgEnv-cray/8.3.3
-# module load cpe/23.02
-# module load cray-mpich/8.1.24 cray-hdf5-parallel/1.12.2.1 cray-python/3.9.13.1
-# module load amd-mixed/5.2.3
+# module load PrgEnv-cray/8.6.0
+# module load cpe/25.09
+# module load cray-mpich/9.0.1 cray-hdf5-parallel/1.14.3.7 cray-python/3.11.7
+# module load amd-mixed/6.4.3
 # module list
 #
 # Optionally, you may want to use a virtual python environment in which to 
@@ -109,7 +109,7 @@ endif
 # ADASTRA_INCLUDES_MPI := -I$(CRAY_MPICH_DIR)/include
 # ADASTRA_INCLUDES_HIP := -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
 
-ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP) -I/opt/software/rocm/5.7.1/include 
+ADASTRA_INCLUDES := $(ADASTRA_INCLUDES_MPI) $(ADASTRA_INCLUDES_HIP)
 
 ################################################################################
 # Libs
