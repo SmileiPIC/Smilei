@@ -3,11 +3,14 @@
 #
 # import_from_lasy = False : the envelope is injected with LaserEnvelopeGaussianAM
 # import_from_lasy = True  : the same laser is first written to a file in the LASY format
-#                            (openPMD, thetaMode geometry, complex envelope of E in V/m),
-#                            without importing lasy, then injected with LaserEnvelopeFromLasyAM,
-#                            which computes the envelope of the vector potential from the one of E.
-# The two runs should give the same envelope, within the accuracy of the conversion from the
-# envelope of E to the envelope of A (second order in the timestep of the LASY file),
+#                            (openPMD, thetaMode geometry), without importing lasy,
+#                            then injected with LaserEnvelopeFromLasyAM.
+#                            The file contains, depending on lasy_envelope_field,
+#                            "normalized_vector_potential" : the complex envelope of e*A/(m_e*c), used directly
+#                            "electric_field"              : the complex envelope of E in V/m, from which
+#                                                            LaserEnvelopeFromLasyAM computes the envelope of A
+# The runs should give the same envelope (with the electric field, within the accuracy of the
+# conversion from the envelope of E to the envelope of A, second order in the timestep of the LASY file),
 # so this namelist can be used as a benchmark of the LASY interface for the envelope model.
 
 import math
@@ -15,6 +18,7 @@ import numpy as np
 import scipy.constants as cst
 
 import_from_lasy        = True
+lasy_envelope_field     = "normalized_vector_potential" # or "electric_field"
 lasy_filename           = "lasy_gaussian_envelope_00000.h5"
 
 # Reference angular frequency (rad/s), needed to convert the LASY file to/from SI units
@@ -122,11 +126,21 @@ else:
         time_envelope             = np.exp(-(t_grid - laser_center)**2 / tgaussian_sigma)
         time_envelope_derivative  = -2. * (t_grid - laser_center) / tgaussian_sigma * time_envelope
 
-        # Envelope of E from the one of A: E_envelope = -(d/dt - i*omega) A_envelope
-        reference_electric_field_SI = cst.m_e * cst.c * reference_frequency_SI / cst.e
-        envelope_E_SI             = (space_envelope_A * (1j * omega * time_envelope - time_envelope_derivative)
-                                     * reference_electric_field_SI)
-        envelope_modes_SI         = envelope_E_SI[np.newaxis, :, :].astype(np.complex128)
+        if lasy_envelope_field == "normalized_vector_potential":
+
+            # Envelope of the normalized vector potential, dimensionless
+            envelope_modes          = (space_envelope_A * time_envelope)[np.newaxis, :, :].astype(np.complex128)
+            unit_dimension          = np.zeros(7)
+
+        else:
+
+            # Envelope of E from the one of A: E_envelope = -(d/dt - i*omega) A_envelope
+            reference_electric_field_SI = cst.m_e * cst.c * reference_frequency_SI / cst.e
+            envelope_E_SI           = (space_envelope_A * (1j * omega * time_envelope - time_envelope_derivative)
+                                       * reference_electric_field_SI)
+            envelope_modes          = envelope_E_SI[np.newaxis, :, :].astype(np.complex128)
+            # Electric field: kg m s^-3 A^-1
+            unit_dimension          = np.array([1., 1., -3., -1., 0., 0., 0.])
 
         with h5py.File(filename, "w") as f:
             # openPMD attributes, as written by LASY (and checked by FBPIC's reader)
@@ -146,7 +160,7 @@ else:
             iteration_group.attrs["timeUnitSI"] = 1.
 
             meshes_group                  = f.create_group("data/0/meshes")
-            dset                          = meshes_group.create_dataset("laserEnvelope", data=envelope_modes_SI)
+            dset                          = meshes_group.create_dataset("laserEnvelope", data=envelope_modes)
             dset.attrs["geometry"]           = np.bytes_("thetaMode")
             dset.attrs["geometryParameters"] = np.bytes_("m=1;imag=+")
             dset.attrs["axisLabels"]         = np.array([b"t", b"r"])
@@ -157,8 +171,8 @@ else:
             dset.attrs["gridUnitSI"]         = 1.
             dset.attrs["position"]           = np.array([0., 0.])
             dset.attrs["unitSI"]             = 1.
-            # Electric field: kg m s^-3 A^-1
-            dset.attrs["unitDimension"]      = np.array([1., 1., -3., -1., 0., 0., 0.])
+            dset.attrs["unitDimension"]      = unit_dimension
+            dset.attrs["envelopeField"]      = np.bytes_(lasy_envelope_field)
             dset.attrs["timeOffset"]         = 0.
             dset.attrs["angularFrequency"]   = omega0_SI
             # E along y in Smilei, i.e. along x in LASY (linear polarization, polarization_phi = 0)
@@ -178,10 +192,11 @@ else:
         write_lasy_file(lasy_filename)
     mpi_barrier()
 
+    # The reference frequency is the one of the Main block, omega0_SI is checked against the file
     LaserEnvelopeFromLasyAM(
         lasy_filename,
         number_of_injection_timesteps,
-        omega0_SI,
+        omega0_SI                    = omega0_SI,
         envelope_solver              = envelope_solver,
         Envelope_boundary_conditions = envelope_boundary_conditions
     )

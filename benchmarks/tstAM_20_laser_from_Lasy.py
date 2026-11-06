@@ -3,9 +3,13 @@
 #
 # import_from_lasy = False : the laser is injected with LaserGaussianAM, as in tstAM_00
 # import_from_lasy = True  : the same laser is first written to a file in the LASY format
-#                            (openPMD, thetaMode geometry, complex envelope of E in V/m),
-#                            without importing lasy, then injected with LaserFromLasy.
-# The two runs should give the same fields, so this namelist can be used as a benchmark
+#                            (openPMD, thetaMode geometry), without importing lasy,
+#                            then injected with LaserFromLasyAM.
+#                            The file contains, depending on lasy_envelope_field,
+#                            "electric_field"              : the complex envelope of E in V/m
+#                            "normalized_vector_potential" : the complex envelope of e*A/(m_e*c),
+#                                                            converted to E by LaserFromLasyAM
+# The runs should give the same fields, so this namelist can be used as a benchmark
 # of the LASY interface.
 
 import math
@@ -13,6 +17,7 @@ import numpy as np
 import scipy.constants as cst
 
 import_from_lasy        = True
+lasy_envelope_field     = "electric_field" # or "normalized_vector_potential"
 lasy_filename           = "lasy_gaussian_laser_00000.h5"
 
 # Reference angular frequency (rad/s), needed to convert the LASY file to/from SI units
@@ -78,7 +83,7 @@ else:
     # Time window written in the LASY file: the laser field is ~1e-11 of its peak after it
     lasy_time_end       = laser_center + 3. * laser_fwhm
     # The LASY grid is finer than the Smilei one, and contains the Smilei sampling points
-    # (t = (i+1/2)*timestep, r = j*cell_length_r/2) of LaserFromLasy
+    # (t = (i+1/2)*timestep, r = j*cell_length_r/2) of LaserFromLasyAM
     lasy_dt             = timestep / 2.
     lasy_dr             = cell_length_r / 4.
     lasy_number_of_t    = int(math.ceil(lasy_time_end / lasy_dt)) + 1
@@ -113,9 +118,52 @@ else:
         # Smilei's separable laser gives E_y = space_envelope * time_envelope * sin(omega*t - phase),
         # which is Re[ 1j * exp(1j*phase) * space_envelope * time_envelope * exp(-1j*omega*t) ]
         reference_electric_field_SI = cst.m_e * cst.c * reference_frequency_SI / cst.e
-        envelope_SI               = (1j * np.exp(1j * phase) * space_envelope * time_envelope
+
+        if lasy_envelope_field == "electric_field":
+
+            envelope_SI           = (1j * np.exp(1j * phase) * space_envelope * time_envelope
                                      * reference_electric_field_SI)
-        envelope_modes_SI         = envelope_SI[np.newaxis, :, :].astype(np.complex128)
+            envelope_modes        = envelope_SI[np.newaxis, :, :].astype(np.complex128)
+            # Electric field: kg m s^-3 A^-1
+            unit_dimension        = np.array([1., 1., -3., -1., 0., 0., 0.])
+
+        else:
+
+            # Envelope of the normalized vector potential giving the same electric field,
+            # integrating in time dA_envelope/dt = i*omega*A_envelope - E_envelope
+            # from A_envelope = 0 at t = 0 (the reference laser is zero before), on a time grid
+            # refinement_factor times finer than the LASY one. Each fine step is integrated
+            # exactly for E_envelope linear inside the step (exponential integrator).
+            phase_along_r          = curvature_phase_coeff * lasy_r**2
+            space_envelope_along_r = a0 * omega * waist_ratio * np.exp(-one_ov_waist_at_plane_2 * lasy_r**2)
+            def normalized_E_envelope(t):
+                return (1j * np.exp(1j * phase_along_r) * space_envelope_along_r
+                        * np.exp(-(t - phase_along_r / omega - laser_center)**2 / tgaussian_sigma))
+
+            refinement_factor      = 8
+            fine_dt                = lasy_dt / refinement_factor
+            exp_i_omega_fine_dt    = np.exp(1j * omega * fine_dt)
+            # integral over the fine step of exp(i*omega*(fine_dt-s)) ds
+            integral_constant_part = (exp_i_omega_fine_dt - 1.) / (1j * omega)
+            # integral over the fine step of exp(i*omega*(fine_dt-s)) * s/fine_dt ds
+            integral_linear_part   = (integral_constant_part - exp_i_omega_fine_dt / (1j * omega)
+                                      + (exp_i_omega_fine_dt - 1.) / ((1j * omega)**2 * fine_dt))
+
+            A_envelope             = np.zeros((lasy_number_of_t, lasy_number_of_r), dtype=np.complex128)
+            A_envelope_fine        = np.zeros(lasy_number_of_r, dtype=np.complex128)
+            E_envelope_fine_old    = normalized_E_envelope(0.)
+            for it in range(lasy_number_of_t - 1):
+                for i_fine in range(refinement_factor):
+                    E_envelope_fine_new = normalized_E_envelope((it * refinement_factor + i_fine + 1) * fine_dt)
+                    A_envelope_fine     = (exp_i_omega_fine_dt * A_envelope_fine
+                                           - E_envelope_fine_old * integral_constant_part
+                                           - (E_envelope_fine_new - E_envelope_fine_old) * integral_linear_part)
+                    E_envelope_fine_old = E_envelope_fine_new
+                A_envelope[it+1, :]     = A_envelope_fine
+
+            envelope_modes        = A_envelope[np.newaxis, :, :]
+            # Normalized vector potential: dimensionless
+            unit_dimension        = np.zeros(7)
 
         with h5py.File(filename, "w") as f:
             # openPMD attributes, as written by LASY (and checked by FBPIC's reader)
@@ -135,7 +183,7 @@ else:
             iteration_group.attrs["timeUnitSI"] = 1.
 
             meshes_group                  = f.create_group("data/0/meshes")
-            dset                          = meshes_group.create_dataset("laserEnvelope", data=envelope_modes_SI)
+            dset                          = meshes_group.create_dataset("laserEnvelope", data=envelope_modes)
             dset.attrs["geometry"]           = np.bytes_("thetaMode")
             dset.attrs["geometryParameters"] = np.bytes_("m=1;imag=+")
             dset.attrs["axisLabels"]         = np.array([b"t", b"r"])
@@ -146,15 +194,15 @@ else:
             dset.attrs["gridUnitSI"]         = 1.
             dset.attrs["position"]           = np.array([0., 0.])
             dset.attrs["unitSI"]             = 1.
-            # Electric field: kg m s^-3 A^-1
-            dset.attrs["unitDimension"]      = np.array([1., 1., -3., -1., 0., 0., 0.])
+            dset.attrs["unitDimension"]      = unit_dimension
+            dset.attrs["envelopeField"]      = np.bytes_(lasy_envelope_field)
             dset.attrs["timeOffset"]         = 0.
             dset.attrs["angularFrequency"]   = omega0_SI
             # E along y in Smilei, i.e. along x in LASY
             dset.attrs["polarization"]       = np.array([1. + 0j, 0. + 0j])
 
     # The namelist is executed by every MPI process: only one writes the file,
-    # and all wait for it before reading it in LaserFromLasy
+    # and all wait for it before reading it in LaserFromLasyAM
     try:
         from mpi4py import MPI
         mpi_rank                  = MPI.COMM_WORLD.Get_rank()
@@ -167,10 +215,11 @@ else:
         write_lasy_file(lasy_filename)
     mpi_barrier()
 
+    # The reference frequency is the one of the Main block, omega0_SI is checked against the file
     LaserFromLasyAM(
         lasy_filename,
         number_of_injection_timesteps,
-        omega0_SI
+        omega0_SI = omega0_SI
     )
 
 DiagFields(
