@@ -17,9 +17,14 @@ import math
 import numpy as np
 import scipy.constants as cst
 
-import_from_lasy        = True
-lasy_envelope_field     = "normalized_vector_potential" # or "electric_field"
-lasy_filename           = "lasy_gaussian_envelope_00000.h5"
+import_from_lasy          = True
+lasy_envelope_field       = "normalized_vector_potential" # or "electric_field"
+lasy_filename             = "lasy_gaussian_envelope_00000.h5"
+# write_benchmark_lasy_file = True  : the namelist writes the benchmark Gaussian laser to lasy_filename
+# write_benchmark_lasy_file = False : lasy_filename is an existing LASY file, which is only read
+# To use your own LASY file, set lasy_filename to its path AND write_benchmark_lasy_file = False.
+# The namelist never overwrites a file it did not write: it stops with an error instead.
+write_benchmark_lasy_file = True
 
 # Reference angular frequency (rad/s), needed to convert the LASY file to/from SI units
 laser_wavelength_SI     = 0.8e-6
@@ -97,8 +102,7 @@ else:
     lasy_dr             = cell_length_r / 4.
     lasy_number_of_t    = int(math.ceil(lasy_time_end / lasy_dt)) + 1
     lasy_number_of_r    = int(math.ceil((grid_length[1] + 3. * cell_length_r) / lasy_dr)) + 1
-    # Number of timesteps during which the envelope is injected
-    number_of_injection_timesteps = int(math.ceil(lasy_time_end / timestep))
+    benchmark_lasy_file_comment = "Written by a Smilei namelist in the LASY format, without lasy"
 
     def write_lasy_file(filename):
         # Writes the laser of LaserEnvelopeGaussianAM (focus, waist, a0, tgaussian time envelope,
@@ -152,7 +156,7 @@ else:
             f.attrs["iterationFormat"]    = np.bytes_("lasy_gaussian_envelope_%T.h5")
             f.attrs["software"]           = np.bytes_("lasy")
             f.attrs["softwareVersion"]    = np.bytes_("0.6.0")
-            f.attrs["comment"]            = np.bytes_("Written by a Smilei namelist in the LASY format, without lasy")
+            f.attrs["comment"]            = np.bytes_(benchmark_lasy_file_comment)
 
             iteration_group               = f.create_group("data/0")
             iteration_group.attrs["dt"]         = 1.
@@ -188,14 +192,36 @@ else:
         mpi_rank                  = 0
         mpi_barrier               = lambda: None
 
-    if mpi_rank == 0:
-        write_lasy_file(lasy_filename)
-    mpi_barrier()
+    def check_benchmark_lasy_file_can_be_written(filename):
+        # The file can be (over)written only if it does not exist or if it was written by this benchmark
+        import os
+        import h5py
+        if os.path.exists(filename):
+            try:
+                with h5py.File(filename, "r") as f:
+                    file_comment  = f.attrs.get("comment", b"")
+            except OSError:
+                file_comment      = b""
+            if isinstance(file_comment, (bytes, np.bytes_)):
+                file_comment      = file_comment.decode()
+            if file_comment != benchmark_lasy_file_comment:
+                raise Exception("The file %s exists and was not written by this benchmark, so it is not overwritten. "
+                                "To read it, set write_benchmark_lasy_file = False; "
+                                "to run the benchmark, choose another lasy_filename." % filename)
 
-    # The reference frequency is the one of the Main block, omega0_SI is checked against the file
+    if write_benchmark_lasy_file:
+        # The check is done by all processes (so that all stop in case of error),
+        # and all of them finish it before the file is written
+        check_benchmark_lasy_file_can_be_written(lasy_filename)
+        mpi_barrier()
+        if mpi_rank == 0:
+            write_lasy_file(lasy_filename)
+        mpi_barrier()
+
+    # The reference frequency is the one of the Main block, omega0_SI is checked against the file.
+    # N_time is not given: the envelope is injected during the whole time axis of the LASY file.
     LaserEnvelopeFromLasyAM(
         lasy_filename,
-        number_of_injection_timesteps,
         omega0_SI                    = omega0_SI,
         envelope_solver              = envelope_solver,
         Envelope_boundary_conditions = envelope_boundary_conditions

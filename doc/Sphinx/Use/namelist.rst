@@ -2528,7 +2528,7 @@ modulations in the instantaneous angular frequency and phase, for example to def
 
     LaserFromLasyAM(
         filename  = "lasy_laser_00000.h5",
-        N_time    = 500,
+        N_time    = 500,                                 # optional, by default the whole time axis of the LASY file
         omega0_SI = 2.*math.pi*scipy.constants.c/0.8e-6, # optional if stored in the LASY file
         box_side  = "xmin"
     )
@@ -2585,10 +2585,12 @@ modulations in the instantaneous angular frequency and phase, for example to def
   .. py:data:: N_time
 
     :type: integer
+    :default: ``None``
 
     The number of timesteps during which the laser is injected, i.e. the field is zero
-    after ``N_time*timestep``. It should cover the duration of the time axis of the LASY file,
-    whose beginning corresponds to ``t=0`` in the simulation.
+    after ``N_time*timestep``. The beginning of the time axis of the LASY file corresponds
+    to ``t=0`` in the simulation. If ``None``, the laser is injected during the whole time axis
+    of the LASY file, i.e. ``N_time`` is the smallest number of timesteps covering it.
 
   .. py:data:: omega0_SI
 
@@ -2897,7 +2899,7 @@ LASY file with ``thetaMode`` geometry, using::
 
     LaserEnvelopeFromLasyAM(
         filename        = "lasy_laser_00000.h5",
-        N_time          = 500,
+        N_time          = 500,                                 # optional, by default the whole time axis of the LASY file
         omega0_SI       = 2.*math.pi*scipy.constants.c/0.8e-6, # optional if stored in the LASY file
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],

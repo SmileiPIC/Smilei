@@ -3229,7 +3229,7 @@ def _read_lasy_envelope_file(filename, omega0_SI, laser_creator_name, envelope_f
  
     return envelope_data, envelope_field, time_step_SI, radial_step_SI, polarization, omega0_SI
 
-def LaserFromLasyAM(filename, N_time, omega0_SI=None, box_side="xmin"):
+def LaserFromLasyAM(filename, N_time=None, omega0_SI=None, box_side="xmin"):
     import scipy.constants as cst
     import numpy as np
     print("\nWARNING: LaserFromLasyAM: LASY lasers are stored in SI units.")
@@ -3275,6 +3275,10 @@ def LaserFromLasyAM(filename, N_time, omega0_SI=None, box_side="xmin"):
 
     datadt  /= onet
     datadr  /= onel
+
+    # By default, the laser is injected during the whole time axis of the LASY file (from t = 0 to its last point)
+    if N_time is None:
+        N_time = int(np.ceil((datant - 1) * datadt / dt))
 
     if lasy_envelope_field == "electric_field":
         # Envelope of the normalized magnetic field, B = E/c
@@ -3460,7 +3464,7 @@ def LaserFromLasyAM(filename, N_time, omega0_SI=None, box_side="xmin"):
         space_time_profile_AM =  mode_functions
     )
 
-def LaserEnvelopeFromLasyAM(filename, N_time, omega0_SI=None,
+def LaserEnvelopeFromLasyAM(filename, N_time=None, omega0_SI=None,
         envelope_solver = "explicit",box_side="xmin",
         Envelope_boundary_conditions = [["reflective"]],
         Env_pml_sigma_parameters = [[0.90,2],[10.0,2],[10.0,2]],
@@ -3534,6 +3538,10 @@ def LaserEnvelopeFromLasyAM(filename, N_time, omega0_SI=None,
     datadr     /= onel
     datat       = np.arange(datant) * datadt
     datar       = np.arange(datanr) * datadr
+
+    # By default, the envelope is injected during the whole time axis of the LASY file (from t = 0 to its last point)
+    if N_time is None:
+        N_time  = int(np.ceil(datat[-1] / dt))
 
     if lasy_envelope_field == "normalized_vector_potential":
         # Envelope of the normalized vector potential along the polarization, first azimuthal mode of the file
