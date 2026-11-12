@@ -2516,6 +2516,98 @@ modulations in the instantaneous angular frequency and phase, for example to def
     from a previous simulation.
 
 
+.. rubric:: 13. Defining a laser from a LASY file
+
+..
+
+  In ``"AMcylindrical"`` geometry, a laser can be imported from a file written by
+  `LASY <https://lasydoc.readthedocs.io>`_, a Python library to create and manipulate
+  laser pulses.
+  Currently only LASY files with ``thetaMode`` geometry are supported, which
+  correspond to a simulation in ``"AMcylindrical"`` geometry. The laser is introduced using::
+
+    LaserFromLasyAM(
+        filename  = "lasy_laser_00000.h5",
+        N_time    = 500,                                 # optional, by default the whole time axis of the LASY file
+        omega0_SI = 2.*math.pi*scipy.constants.c/0.8e-6, # optional if stored in the LASY file
+        box_side  = "xmin"
+    )
+
+  A LASY file stores, as azimuthal modes on a grid of time ``t`` and radius ``r``, the complex envelope
+  of either the electric field :math:`\tilde{E}` (in V/m) or the normalized vector potential
+  :math:`\tilde{a}` (with :math:`a = eA/(m_ec)`), together with the laser angular frequency :math:`\omega_0`
+  and the polarization vector :math:`(p_x, p_y)` in its transverse plane.
+  The electric field at the boundary is
+  :math:`\mathbf{E} = \mathrm{Re}\left[ \tilde{E}(r,\theta,t)\, e^{-i\omega_0 t}\, (p_x \mathbf{e}_y + p_y \mathbf{e}_z)\right]`,
+  as LASY propagates along its ``z`` axis, whose transverse axes ``(x, y)`` correspond to the ``(y, z)`` axes of Smilei.
+  If the file contains the normalized vector potential, the envelope of the electric field is computed
+  in normalized units as :math:`\tilde{E} = -\left(\partial_t - i\omega_0\right)\tilde{a}`,
+  with second order finite differences in time.
+  The magnetic field components :math:`B_r` and :math:`B_\theta` are computed from this field,
+  decomposed in the :py:data:`number_of_AM` azimuthal modes of the simulation, and injected through
+  a ``Laser`` block with ``space_time_profile_AM``.
+  Each azimuthal mode :math:`m` of the LASY envelope contributes to the modes :math:`|m \pm 1|` of the simulation:
+  for example, a cylindrically symmetric envelope with linear polarization gives only the mode 1,
+  so that at least ``number_of_AM = 2`` is needed.
+  The quantities in SI units of the LASY file are converted to normalized units using the
+  :py:data:`reference_angular_frequency_SI` of the ``Main`` block, which must therefore be defined.
+
+  The metadata of the LASY file are treated as follows:
+
+  * The field stored in the file is given by its attribute ``envelopeField``, which must be
+    ``"electric_field"`` or ``"normalized_vector_potential"`` and be consistent with its ``unitDimension``.
+    If ``envelopeField`` is absent, the field is deduced from ``unitDimension`` (V/m or dimensionless).
+    If both are absent, the electric field is assumed. A warning is printed in these last two cases.
+  * The electric field must be stored in V/m and the normalized vector potential is dimensionless:
+    an error is raised if the attribute ``unitSI`` is present and different from 1.
+    A warning is printed if the normalized vector potential is larger than 1000,
+    since the file may actually contain an electric field in V/m.
+  * The time and radial grid must be in s and m: ``gridUnitSI`` must be absent, equal to 1,
+    or given with one value per axis.
+  * The polarization vector is normalized, keeping its phases. A warning is printed if its modulus differs from 1.
+
+  This creator must be called after the ``Main`` block, since it reads the
+  :py:data:`timestep`, :py:data:`number_of_AM`, :py:data:`grid_length`,
+  :py:data:`cell_length`, ``number_of_cells`` and :py:data:`reference_angular_frequency_SI` of the simulation.
+  It requires the python packages *numpy*, *scipy* and *h5py*.
+  During the initialization, the envelope stored in the file is linearly interpolated
+  on the times and radii where the laser is evaluated at the boundary
+  (the carrier oscillation :math:`e^{-i\omega_0 t}` is computed analytically).
+  This precomputation can be costly in memory for large values of :py:data:`N_time`
+  and of the number of cells along ``r``.
+
+  .. py:data:: filename
+
+    :type: string
+
+    The path to the LASY file. The envelope is read at iteration ``0`` of the LASY file.
+
+  .. py:data:: N_time
+
+    :type: integer
+    :default: ``None``
+
+    The number of timesteps during which the laser is injected, i.e. the field is zero
+    after ``N_time*timestep``. The beginning of the time axis of the LASY file corresponds
+    to ``t=0`` in the simulation. If ``None``, the laser is injected during the whole time axis
+    of the LASY file, i.e. ``N_time`` is the smallest number of timesteps covering it.
+
+  .. py:data:: omega0_SI
+
+    :type: float
+    :default: ``None``
+
+    The laser angular frequency in SI units (rad/s). If ``None``, the ``angularFrequency``
+    stored in the LASY file is used. If both are given, they must agree. An error is raised
+    if they differ, or if neither of them is given.
+
+  .. py:data:: box_side
+
+    :default: ``"xmin"``
+
+    The side of the box from which the laser is injected. Only ``"xmin"`` is currently supported.
+
+
 ----
 
 .. _laser_envelope:
@@ -2798,6 +2890,45 @@ for these ``LaserEnvelope`` creators, the arguments are defined as for the
 ``order_N`` and ``flattened_intensity_position`` defined as for the corresponding ``LaserSquareFlattenedGaussian2D``,
 ``LaserCircularFlattenedGaussian3D`` creators.
 
+.. rubric:: 7. Defining a laser envelope from a LASY file
+
+..
+
+In ``"AMcylindrical"`` geometry (with ``number_of_AM = 1``), a laser envelope can be imported from a
+LASY file with ``thetaMode`` geometry, using::
+
+    LaserEnvelopeFromLasyAM(
+        filename        = "lasy_laser_00000.h5",
+        N_time          = 500,                                 # optional, by default the whole time axis of the LASY file
+        omega0_SI       = 2.*math.pi*scipy.constants.c/0.8e-6, # optional if stored in the LASY file
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+        box_side        = "xmin"
+    )
+
+The arguments ``filename``, ``N_time`` and ``omega0_SI``, as well as the treatment of the metadata
+of the LASY file, are the same as for the laser creator ``LaserFromLasyAM``, except that the
+normalized vector potential is assumed if neither ``envelopeField`` nor ``unitDimension`` are present.
+The other arguments have the same meaning as in the ``LaserEnvelope`` block (``Env_pml_sigma_parameters``,
+``Env_pml_kappa_parameters`` and ``Env_pml_alpha_parameters`` can also be given).
+The laser envelope is injected from the ``xmin`` border of the window, the only value of
+``box_side`` currently supported.
+
+Perfect cylindrical symmetry is assumed for the laser envelope: if the LASY file contains
+several azimuthal modes, only the first one is used and a warning is printed.
+If the file contains the normalized vector potential, its envelope along the polarization
+direction is used directly as :math:`\tilde{A}`. If the file contains the electric field,
+:math:`\tilde{A}` is computed by integrating in time
+:math:`\tilde{E} = -\left(\partial_t - i\omega_0\right)\tilde{A}` (see :doc:`/Understand/laser_envelope`)
+with a second order scheme, assuming that the laser envelope varies slowly at the start
+of the time window of the LASY file, and a warning is printed.
+As for ``LaserFromLasyAM``, the envelope is linearly interpolated during the initialization
+on the times and radii where it is evaluated at the boundary.
+
+The polarization of the LASY file sets the parameters ``polarization_phi`` and ``ellipticity``
+of the envelope. Only linear (``ellipticity = 0``) and circular (``ellipticity = 1``) polarizations
+are supported, otherwise an error is raised. For circular polarization, :math:`\tilde{A}` is the
+envelope of each of the two transverse components, i.e. the envelope of the file multiplied by :math:`p_x`.
 
 ----
 
