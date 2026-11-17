@@ -169,8 +169,8 @@ decomposed in the :math:`N_m` azimuthal modes of the simulation (``number_of_AM`
 These components are obtained from the LASY envelope as follows.
 
 **Electric field from the vector potential.**
-If the file contains :math:`\tilde{A}`, the envelope :math:`\tilde{E}` is first computed
-with Eq. :eq:`LasyEnvelopeEA`, the time derivative being evaluated with centered,
+If the file contains :math:`\tilde{A}`, the envelope :math:`\tilde{\mathbf{E}}` is first computed
+with Eq. :eq:`LasyEnvelope`, the time derivative being evaluated with centered,
 second-order finite differences on the time grid of the file.
 
 **Magnetic field.**
@@ -238,8 +238,9 @@ The field is zero outside the time and radial ranges of the LASY grid.
 Laser envelope: ``LaserEnvelopeFromLasyAM``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :doc:`laser_envelope` describes the laser by the complex envelope :math:`\tilde{A}`
-of its transverse vector potential, :math:`\mathbf{A} = \textrm{Re}\left[\tilde{A}\,e^{i\omega(x-t)}\right]`.
+The :doc:`laser_envelope` describes the laser by the complex envelope :math:`\tilde{\mathbf{A}}`
+of its transverse vector potential, :math:`\mathbf{A} = \textrm{Re}\left[\tilde{\mathbf{A}}\,e^{i\omega(x-t)}\right]`.
+This laser envelope is injected at :math:`x=0`.
 
 **Azimuthal modes.**
 The envelope model assumes a cylindrically symmetric envelope.
@@ -252,8 +253,12 @@ Non-axisymmetric features of the LASY laser, such as astigmatism or coma, are no
 **Polarization.** Only linear and circular polarizations are supported; elliptical polarizations raise an error.
 
 **Electric field from the vector potential.**
-If the file contains :math:`\tilde{A}`, the envelope :math:`\tilde{E}` is computed
-from :math:`\mathbf{E} = -\partial_t\mathbf{A}`
+If the file contains the envelope of the transverse vector potential :math:`\tilde{\mathbf{A}}`, 
+the envelope :math:`\tilde{\mathbf{E}}` of the transverse electric field is computed
+with centered finite differences from 
+:math:`\mathbf{E} = -\partial_t\mathbf{A}`, yielding the following relation for the envelopes 
+of these fields :math:`\tilde{\mathbf{E}} = -\left(\partial_t-ik_0c\right)\tilde{\mathbf{A}}(\mathbf{x},t)`
+(see :doc:`/Understand/laser_envelope` for the derivation).
 
 
 ----

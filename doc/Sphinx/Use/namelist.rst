@@ -2552,7 +2552,8 @@ modulations in the instantaneous angular frequency and phase, for example to def
   The quantities in SI units of the LASY file are converted to normalized units using the
   :py:data:`reference_angular_frequency_SI` of the ``Main`` block, which must therefore be defined.
 
-  The metadata of the LASY file are treated as follows:
+  The metadata of the LASY file are treated as follows.
+  More information can be found in the page :doc:`/Understand/laser_from_lasy`.
 
   * The field stored in the file is given by its attribute ``envelopeField``, which must be
     ``"electric_field"`` or ``"normalized_vector_potential"`` and be consistent with its ``unitDimension``.
@@ -2929,6 +2930,8 @@ The polarization of the LASY file sets the parameters ``polarization_phi`` and `
 of the envelope. Only linear (``ellipticity = 0``) and circular (``ellipticity = 1``) polarizations
 are supported, otherwise an error is raised. For circular polarization, :math:`\tilde{A}` is the
 envelope of each of the two transverse components, i.e. the envelope of the file multiplied by :math:`p_x`.
+
+More information can be found in the page :doc:`/Understand/laser_from_lasy`.
 
 ----
 
@@ -4599,3 +4602,7 @@ namelist. They should not be re-defined by the user!
   These variables can be access during ``happi`` post-processing, e.g.
   ``S.namelist.smilei_mpi_size``.
 
+.. toctree::
+   :hidden:
+
+   Understand/laser_from_lasy
