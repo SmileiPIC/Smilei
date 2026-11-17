@@ -2787,7 +2787,7 @@ def LaserCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., focus=No
         order_N=10,flattened_intensity_position="far_from_focus"):
     import numpy as np
     import scipy.special as sp
-    assert len(focus)==1, "LaserCircularFlattenedGaussianAM: focus must be a list of length 1."
+    assert focus is not None and len(focus)==1, "LaserCircularFlattenedGaussianAM: focus must be a list of length 1."
     assert box_side == "xmin", "LaserCircularFlattenedGaussianAM: currently only box_side=`xmin` is supported."
     assert isinstance(order_N, int), "LaserCircularFlattenedGaussianAM: order_N must be an integer."
     assert flattened_intensity_position in ("far_from_focus", "at_focus"), (
@@ -2814,7 +2814,7 @@ def LaserCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., focus=No
         cn[n]    = np.sum((1./2)**m_values * sp.binom(m_values,n))
 
     # The LG mode coefficients have alternating signs
-    # if the flattened profile is far from focus
+    # if the flattened profile is at from focus
     if flattened_intensity_position == "at_focus":
         cn = cn*(-1.)**np.arange(order_N+1)
 
@@ -2957,16 +2957,15 @@ def LaserEnvelopeCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., 
 
     import numpy as np
     import scipy.special as sp
-    from numpy import exp, sqrt, arctan, vectorize
 
-    assert len(focus)==1, "LaserEnvelopeCircularFlattenedGaussianAM: focus must be a list of length 1."
+    assert focus is not None and len(focus)==1, "LaserEnvelopeCircularFlattenedGaussianAM: focus must be a list of length 1."
     assert isinstance(order_N, int), "LaserEnvelopeCircularFlattenedGaussianAM: order_N must be an integer."
-    assert box_side in ("xmin", "inside")
+    assert box_side in ("xmin", "inside"), "LaserEnvelopeCircularFlattenedGaussianAM: box_side must be either 'inside' or 'xmin'."
     assert flattened_intensity_position in ("far_from_focus", "at_focus"), (
     "LaserEnvelopeCircularFlattenedGaussianAM: flattened_intensity_position must be either 'at_focus' or 'far_from_focus'.")
 
     # Polarization
-    polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
+    polarization_amplitude_factor = 1/np.sqrt(1.+ellipticity**2)
 
     # waist and Rayleigh length
     waist_corrected = (
@@ -2983,7 +2982,7 @@ def LaserEnvelopeCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., 
         cn[n]    = np.sum((1./2)**m_values * sp.binom(m_values,n))
 
     # the LG mode coefficients have alternating signs
-    # if the flattened profile is far from focus
+    # if the flattened profile is at focus
     if flattened_intensity_position == "at_focus":
         cn = cn*(-1.)**np.arange(order_N+1)
 
@@ -3022,10 +3021,10 @@ def LaserEnvelopeCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., 
         # precompute the Laguerre polynomials
         mask             = exp_along_r > 0.
         r_sq_scaled      = 2 * r**2 / w**2
-        L                = np.zeros((N+1,) + r.shape, dtype=float)
+        L                = np.zeros((order_N+1,) + r.shape, dtype=float)
         if np.any(mask):
-            L[:, mask]   = Laguerre_polynomials(r_sq_scaled[mask], N)     # Only evaluate Laguerre polynomials where the Gaussian has not underflown to zero
-            L            = np.nan_to_num(L,nan=0.0,posinf=0.0,neginf=0.0) # convert the nan to zero, that can happen only when the exponential is ~0
+            L[:, mask]   = Laguerre_polynomials(r_sq_scaled[mask], order_N)     # Only evaluate Laguerre polynomials where the Gaussian has not underflown to zero
+            L            = np.nan_to_num(L,nan=0.0,posinf=0.0,neginf=0.0)       # convert the nan to zero, that can happen only when the exponential is ~0
 
         # sum the LG modes parts that change for each mode
         LG_field_along_r = np.zeros_like(r,dtype=complex)
@@ -3040,12 +3039,10 @@ def LaserEnvelopeCircularFlattenedGaussianAM( box_side="xmin", a0=1., omega=1., 
     # define the profile for the LaserEnvelope block
     if (box_side=="inside"):
         def envelope_profile(x,r,t):
-            return circular_flattened_Gaussian_beamAM(x,r)*vectorize(time_envelope)(t)
-    elif (box_side=="xmin"):
-        def envelope_profile(r,t):
-            return circular_flattened_Gaussian_beamAM(0,r)*vectorize(time_envelope)(t)
+            return circular_flattened_Gaussian_beamAM(x,r)*np.vectorize(time_envelope)(t)
     else:
-        print("LaserEnvelopeCircularFlattenedGaussianAM error: box_side must be either 'inside' or 'xmin'. ")
+        def envelope_profile(r,t):
+            return circular_flattened_Gaussian_beamAM(0,r)*np.vectorize(time_envelope)(t)
 
 
     # Create Laser Envelope
