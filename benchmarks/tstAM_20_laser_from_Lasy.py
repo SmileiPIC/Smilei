@@ -205,15 +205,33 @@ else:
             # E along y in Smilei, i.e. along x in LASY
             dset.attrs["polarization"]       = np.array([1. + 0j, 0. + 0j])
 
-    # The namelist is executed by every MPI process: only one writes the file,
-    # and all wait for it before reading it in LaserFromLasyAM
+    # The namelist is executed by every MPI process: only the first one (smilei_mpi_rank = 0)
+    # checks and writes the file, and all wait for it before reading it in LaserFromLasyAM
     try:
         from mpi4py import MPI
-        mpi_rank                  = MPI.COMM_WORLD.Get_rank()
         mpi_barrier               = MPI.COMM_WORLD.Barrier
     except ImportError:
-        mpi_rank                  = 0
         mpi_barrier               = lambda: None
+
+    def wait_for_benchmark_lasy_file(filename, maximum_waiting_time_in_seconds=120.):
+        # On a network file system, a file just written by a process on another node
+        # can be seen with some delay by the other nodes: wait until it can be opened
+        import os
+        import time
+        import h5py
+        file_directory            = os.path.dirname(os.path.abspath(filename))
+        waiting_start_time        = time.time()
+        while True:
+            try:
+                # Listing the directory refreshes its content cached by the file system
+                os.listdir(file_directory)
+                with h5py.File(filename, "r") as f:
+                    return
+            except OSError:
+                if time.time() - waiting_start_time > maximum_waiting_time_in_seconds:
+                    raise Exception("The file %s written by the MPI process 0 is still not readable by the MPI process %d after %g s"
+                                    % (filename, smilei_mpi_rank, maximum_waiting_time_in_seconds))
+                time.sleep(0.5)
 
     def check_benchmark_lasy_file_can_be_written(filename):
         # The file can be (over)written only if it does not exist or if it was written by this benchmark
@@ -233,13 +251,13 @@ else:
                                 "to run the benchmark, choose another lasy_filename." % filename)
 
     if write_benchmark_lasy_file:
-        # The check is done by all processes (so that all stop in case of error),
-        # and all of them finish it before the file is written
-        check_benchmark_lasy_file_can_be_written(lasy_filename)
-        mpi_barrier()
-        if mpi_rank == 0:
+        # Only the MPI process 0 looks for the file before it is written: on a network file system,
+        # a process that does not find a file can keep this answer in cache after the file is created
+        if smilei_mpi_rank == 0:
+            check_benchmark_lasy_file_can_be_written(lasy_filename)
             write_lasy_file(lasy_filename)
         mpi_barrier()
+        wait_for_benchmark_lasy_file(lasy_filename)
 
     # The reference frequency is the one of the Main block, omega0_SI is checked against the file.
     # N_time is not given: the laser is injected during the whole time axis of the LASY file.

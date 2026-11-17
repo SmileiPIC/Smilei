@@ -1,7 +1,7 @@
 import os, re, numpy as np, math, h5py
 import happi
 
-S = happi.Open(["./restart*"], verbose=False)
+S = happi.Open(["./restart*"], verbose=False,scan=False)
 
 
 # COMPARE THE Er FIELD in polarization plane
