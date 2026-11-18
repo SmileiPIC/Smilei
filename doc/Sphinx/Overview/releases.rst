@@ -46,6 +46,7 @@ Changes made in the repository (not released)
   * New ``Laser`` creator: ``LaserCircularFlattenedGaussianAM`` and ``LaserEnvelopeCircularFlattenedGaussianAM`` for ``AMcylindrical`` geometry.
   * New ``Laser`` creators: ``LaserSquareFlattenedGaussian2D`` and ``LaserEnvelopeSquareFlattenedGaussian2D`` for ``2Dcartesian`` geometry.
   * New ``Laser`` creators: ``LaserCircularFlattenedGaussian3D`` and ``LaserEnvelopeCircularFlattenedGaussian3D`` for ``3Dcartesian`` geometry.
+  * New ``Laser`` creator: ``LaserFromLasyAM`` and ``LaserEnvelopeFromLasyAM`` for ``AMcylindrical`` geometry.
 
 * **Bug fixes**:
 
